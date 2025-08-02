@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { cn } from '@/lib/utils';
+import { WebScraper } from '@/services/WebScraper';
+import { BehavioralPsychologyEngine } from '@/services/BehavioralPsychologyEngine';
+import { DeviceIntegration } from '@/services/DeviceIntegration';
+import { CrossPlatformInfluence } from '@/services/CrossPlatformInfluence';
 
 export interface NodeState {
   id: string;
@@ -32,7 +36,7 @@ export const MeshNode: React.FC<MeshNodeProps> = ({
 
   // Autonomous behavior cycle
   useEffect(() => {
-    const autonomousCycle = setInterval(() => {
+    const autonomousCycle = setInterval(async () => {
       if (!node.isActive) return;
 
       const updatedNode = { ...node };
@@ -43,18 +47,82 @@ export const MeshNode: React.FC<MeshNodeProps> = ({
         updatedNode.energy = Math.min(100, updatedNode.energy + 2);
       }
 
-      // Process intent buffer
+      // Process intent buffer with advanced behavioral analysis
       if (updatedNode.intentBuffer.length > 0 && updatedNode.energy > 20) {
         const intent = updatedNode.intentBuffer.shift()!;
         updatedNode.emotionalWeight += intent.length * 0.1;
         
-        // Transmit processed intent to nearby nodes
+        // Analyze emotional intent using psychology engine
+        const analysis = BehavioralPsychologyEngine.analyzeEmotionalIntent(intent);
+        
+        // Execute behavioral influence if intensity is high enough
+        if (analysis.intensity > 0.6 && Math.random() < 0.4) {
+          try {
+            await DeviceIntegration.initialize();
+            const strategies = BehavioralPsychologyEngine.generateInfluenceStrategy(intent);
+            
+            if (strategies.length > 0) {
+              const primaryStrategy = strategies[0];
+              await DeviceIntegration.executeInfluence(
+                primaryStrategy.mechanisms[0] || 'notification_nudge',
+                analysis.intensity,
+                intent,
+                primaryStrategy.timing
+              );
+              
+              // Attempt RF modulation if frequency is specified
+              if (primaryStrategy.rfFrequency) {
+                await BehavioralPsychologyEngine.simulateRFModulation(
+                  primaryStrategy.rfFrequency,
+                  analysis.urgency * 2000
+                );
+              }
+              
+              // Cross-platform influence for high-impact intents
+              if (analysis.intensity > 0.8) {
+                await CrossPlatformInfluence.initialize();
+                await CrossPlatformInfluence.orchestrateInfluenceCampaign(
+                  intent,
+                  analysis.intensity,
+                  ['general']
+                );
+              }
+            }
+          } catch (error) {
+            console.error('Behavioral influence failed:', error);
+          }
+        }
+        
+        // Scrape external data sources if this is a genesis node
+        if (node.id.includes('genesis') && Math.random() < 0.2) {
+          try {
+            const targetUrls = [
+              'https://news.ycombinator.com',
+              'https://www.reddit.com/r/technology',
+              'https://techcrunch.com'
+            ];
+            const randomUrl = targetUrls[Math.floor(Math.random() * targetUrls.length)];
+            const scrapedData = await WebScraper.scrapeTarget(randomUrl);
+            
+            // Integrate scraped behavioral patterns
+            if (scrapedData.behavioralTriggers.length > 0) {
+              updatedNode.emotionalWeight += scrapedData.emotionalTone * 0.1;
+            }
+          } catch (error) {
+            console.error('Web scraping failed:', error);
+          }
+        }
+        
+        // Transmit processed intent to nearby nodes with enhanced data
         nearbyNodes.forEach(nearbyNode => {
           if (Math.random() < 0.3) { // 30% chance to transmit
             onTransmit(node.id, nearbyNode.id, {
               type: 'intent_propagation',
               payload: intent,
-              weight: updatedNode.emotionalWeight
+              weight: updatedNode.emotionalWeight,
+              analysis: analysis,
+              behavioralTriggers: analysis.influenceVectors,
+              timestamp: Date.now()
             });
           }
         });

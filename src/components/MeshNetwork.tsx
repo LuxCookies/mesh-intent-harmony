@@ -3,6 +3,10 @@ import { MeshNode, NodeState } from './MeshNode';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import { BehavioralPsychologyEngine } from '@/services/BehavioralPsychologyEngine';
+import { DeviceIntegration } from '@/services/DeviceIntegration';
+import { CrossPlatformInfluence } from '@/services/CrossPlatformInfluence';
+import { WebScraper } from '@/services/WebScraper';
 
 export const MeshNetwork: React.FC = () => {
   const [nodes, setNodes] = useState<NodeState[]>([]);
@@ -19,22 +23,31 @@ export const MeshNetwork: React.FC = () => {
   const networkRef = useRef<HTMLDivElement>(null);
   const nodeIdCounter = useRef(0);
 
-  // Initialize genesis node
+  // Initialize genesis node and behavioral systems
   useEffect(() => {
-    const genesisNode: NodeState = {
-      id: 'genesis-0',
-      position: { x: 400, y: 300 },
-      energy: 80,
-      connections: [],
-      intentBuffer: [],
-      frequency: 42.7,
-      lastReplication: Date.now(),
-      isActive: true,
-      emotionalWeight: 1.0
+    const initializeMesh = async () => {
+      // Initialize all behavioral systems
+      BehavioralPsychologyEngine.initialize();
+      await DeviceIntegration.initialize();
+      await CrossPlatformInfluence.initialize();
+      
+      const genesisNode: NodeState = {
+        id: 'genesis-0',
+        position: { x: 400, y: 300 },
+        energy: 80,
+        connections: [],
+        intentBuffer: [],
+        frequency: 42.7,
+        lastReplication: Date.now(),
+        isActive: true,
+        emotionalWeight: 1.0
+      };
+      
+      setNodes([genesisNode]);
+      setMeshStatus('Behavioral mesh active. All influence systems online. Ready for emotional intent...');
     };
     
-    setNodes([genesisNode]);
-    setMeshStatus('Genesis node active. Awaiting emotional intent...');
+    initializeMesh();
   }, []);
 
   // Spawn new node
