@@ -268,7 +268,7 @@ export class RFBrainwaveEntrainment {
         this.executeAMModulation(carrierOsc, modOsc, gainNode, modulationFreq, amplitude, duration, currentTime);
         break;
       case 'FM': 
-        this.executeFMModulation(carrierOsc, modOsc, modulationFreq, amplitude, duration, sweepRange, currentTime);
+        this.executeFMModulation(carrierOsc, modOsc, modulationFreq, amplitude, duration, currentTime, sweepRange);
         break;
       case 'PM':
         this.executePMModulation(carrierOsc, modOsc, modulationFreq, amplitude, duration, phaseOffset, currentTime);
@@ -277,7 +277,7 @@ export class RFBrainwaveEntrainment {
         this.executeQAMModulation(carrierOsc, modOsc, gainNode, modulationFreq, amplitude, duration, currentTime);
         break;
       case 'BPSK':
-        this.executeBPSKModulation(carrierOsc, modulationFreq, amplitude, duration, pulsePattern, currentTime);
+        this.executeBPSKModulation(carrierOsc, modulationFreq, amplitude, duration, currentTime, pulsePattern);
         break;
     }
 
