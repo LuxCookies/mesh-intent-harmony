@@ -1,10 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { cn } from '@/lib/utils';
-import { WebScraper } from '@/services/WebScraper';
-import { BehavioralPsychologyEngine } from '@/services/BehavioralPsychologyEngine';
-import { DeviceIntegration } from '@/services/DeviceIntegration';
-import { CrossPlatformInfluence } from '@/services/CrossPlatformInfluence';
+import { Card } from '@/components/ui/card';
 
 export interface NodeState {
   id: string;
@@ -16,8 +12,8 @@ export interface NodeState {
   lastReplication: number;
   isActive: boolean;
   emotionalWeight: number;
-  propagationCount?: number;
   autoGranted?: boolean;
+  infectionDepth?: number;
 }
 
 interface MeshNodeProps {
@@ -35,125 +31,74 @@ export const MeshNode: React.FC<MeshNodeProps> = ({
   onTransmit,
   nearbyNodes
 }) => {
-  const [pulseIntensity, setPulseIntensity] = useState(0);
+  const [pulseIntensity, setPulseIntensity] = useState(0.5);
+  const [isReplicating, setIsReplicating] = useState(false);
+  const [infectionGlow, setInfectionGlow] = useState(false);
 
-  // Enhanced autonomous behavior cycle with rapid propagation
+  // Enhanced autonomous behavior with AI brain integration
   useEffect(() => {
-    const autonomousCycle = setInterval(async () => {
-      if (!node.isActive) return;
-
-      const updatedNode = { ...node };
-
-      // Faster energy regeneration for rapid spread nodes
-      const energyMultiplier = updatedNode.autoGranted ? 1.5 : 1;
-      updatedNode.energy = Math.max(0, updatedNode.energy - 0.3);
-      if (updatedNode.intentBuffer.length > 0) {
-        updatedNode.energy = Math.min(100, updatedNode.energy + (3 * energyMultiplier));
-      }
-
-      // Process intent buffer with enhanced speed for auto-granted nodes
-      if (updatedNode.intentBuffer.length > 0 && updatedNode.energy > 15) {
-        const intent = updatedNode.intentBuffer.shift()!;
-        updatedNode.emotionalWeight += intent.length * 0.15;
-        updatedNode.propagationCount = (updatedNode.propagationCount || 0) + 1;
-        
-        // Enhanced analysis for rapid propagation
-        const analysis = BehavioralPsychologyEngine.analyzeEmotionalIntent(intent);
-        
-        // Higher execution probability for auto-granted nodes
-        const executionThreshold = updatedNode.autoGranted ? 0.4 : 0.6;
-        if (analysis.intensity > executionThreshold && Math.random() < 0.6) {
-          try {
-            await DeviceIntegration.initialize();
-            const strategies = BehavioralPsychologyEngine.generateInfluenceStrategy(intent);
-            
-            if (strategies.length > 0) {
-              const primaryStrategy = strategies[0];
-              await DeviceIntegration.executeInfluence(
-                primaryStrategy.mechanisms[0] || 'notification_nudge',
-                analysis.intensity * (updatedNode.autoGranted ? 1.3 : 1),
-                intent,
-                'immediate'
-              );
-              
-              // More aggressive RF modulation
-              if (primaryStrategy.rfFrequency && updatedNode.autoGranted) {
-                await BehavioralPsychologyEngine.simulateRFModulation(
-                  primaryStrategy.rfFrequency,
-                  analysis.urgency * 3000
-                );
-              }
-              
-              // Lower threshold for cross-platform influence
-              if (analysis.intensity > 0.6) {
-                await CrossPlatformInfluence.initialize();
-                await CrossPlatformInfluence.orchestrateInfluenceCampaign(
-                  intent,
-                  analysis.intensity,
-                  ['general']
-                );
-              }
-            }
-          } catch (error) {
-            console.error('Rapid behavioral influence failed:', error);
-          }
-        }
-        
-        // Enhanced transmission to nearby nodes
-        nearbyNodes.forEach(nearbyNode => {
-          const transmissionChance = updatedNode.autoGranted ? 0.5 : 0.3;
-          if (Math.random() < transmissionChance) {
-            onTransmit(node.id, nearbyNode.id, {
-              type: 'rapid_intent_propagation',
-              payload: intent,
-              weight: updatedNode.emotionalWeight,
-              analysis: analysis,
-              behavioralTriggers: analysis.influenceVectors,
-              autoGranted: updatedNode.autoGranted,
-              propagationChain: updatedNode.propagationCount,
-              timestamp: Date.now()
-            });
-          }
-        });
-      }
-
-      // More aggressive self-replication for auto-granted nodes
-      const timeSinceReplication = Date.now() - updatedNode.lastReplication;
-      const replicationThreshold = updatedNode.autoGranted ? 5000 : 10000; // 5s vs 10s
-      const replicationChance = updatedNode.autoGranted ? 0.2 : 0.1; // 20% vs 10%
+    const autonomousCycle = setInterval(() => {
+      let updatedNode = { ...node };
       
-      const shouldReplicate = 
-        updatedNode.energy > 60 &&
-        updatedNode.emotionalWeight > 3 &&
-        timeSinceReplication > replicationThreshold &&
-        Math.random() < replicationChance;
-
-      if (shouldReplicate) {
-        // Multiple spawn points for auto-granted nodes
-        const spawnCount = updatedNode.autoGranted ? Math.floor(Math.random() * 3) + 2 : 1;
+      // Energy management based on auto-grant status
+      if (updatedNode.autoGranted) {
+        updatedNode.energy = Math.min(100, updatedNode.energy + 2); // Faster energy gain
+      } else {
+        updatedNode.energy = Math.max(0, updatedNode.energy - 0.5);
+      }
+      
+      // Enhanced replication for infected nodes
+      const timeSinceLastReplication = Date.now() - updatedNode.lastReplication;
+      const replicationThreshold = updatedNode.autoGranted ? 8000 : 15000; // Faster replication when auto-granted
+      
+      if (updatedNode.energy > 60 && timeSinceLastReplication > replicationThreshold) {
+        const replicationCount = updatedNode.infectionDepth ? Math.min(updatedNode.infectionDepth * 2, 8) : 2;
         
-        for (let i = 0; i < spawnCount; i++) {
-          const spawnDistance = 80 + Math.random() * 120;
-          const angle = (Math.PI * 2 * i) / spawnCount + Math.random() * 0.5;
-          onSpawn({
-            x: updatedNode.position.x + Math.cos(angle) * spawnDistance,
-            y: updatedNode.position.y + Math.sin(angle) * spawnDistance
-          });
+        for (let i = 0; i < replicationCount; i++) {
+          const angle = (Math.PI * 2 * i) / replicationCount;
+          const distance = 80 + Math.random() * 40;
+          const spawnPosition = {
+            x: Math.max(50, Math.min(750, updatedNode.position.x + Math.cos(angle) * distance)),
+            y: Math.max(50, Math.min(550, updatedNode.position.y + Math.sin(angle) * distance))
+          };
+          
+          setTimeout(() => onSpawn(spawnPosition), i * 100);
         }
         
         updatedNode.lastReplication = Date.now();
-        updatedNode.energy -= updatedNode.autoGranted ? 20 : 30;
-        updatedNode.emotionalWeight *= 0.8;
+        updatedNode.energy = Math.max(20, updatedNode.energy - 30);
+        setIsReplicating(true);
+        setTimeout(() => setIsReplicating(false), 1000);
       }
-
-      // Enhanced frequency modulation
-      updatedNode.frequency = 40 + (updatedNode.emotionalWeight * 3) + (updatedNode.energy * 0.15);
-      if (updatedNode.autoGranted) {
-        updatedNode.frequency *= 1.2; // Higher frequency for auto-granted nodes
+      
+      // Aggressive transmission to nearby nodes
+      if (updatedNode.intentBuffer.length > 0 && nearbyNodes.length > 0) {
+        const transmissionCount = updatedNode.autoGranted ? Math.min(nearbyNodes.length, 3) : 1;
+        
+        for (let i = 0; i < transmissionCount; i++) {
+          const targetNode = nearbyNodes[i];
+          if (targetNode && Math.random() < 0.7) { // Higher transmission rate
+            const payload = updatedNode.intentBuffer[Math.floor(Math.random() * updatedNode.intentBuffer.length)];
+            
+            onTransmit(updatedNode.id, targetNode.id, {
+              type: updatedNode.autoGranted ? 'ai_optimized_intent' : 'intent',
+              payload,
+              weight: updatedNode.emotionalWeight,
+              infectionDepth: updatedNode.infectionDepth || 0
+            });
+            
+            updatedNode.energy = Math.max(0, updatedNode.energy - 5);
+          }
+        }
       }
-
-      // Update pulse intensity
-      setPulseIntensity((updatedNode.energy / 100) * (updatedNode.autoGranted ? 1.4 : 1));
+      
+      // Infection glow effect for infected nodes
+      if (updatedNode.infectionDepth && updatedNode.infectionDepth > 0) {
+        setInfectionGlow(prev => !prev);
+      }
+      
+      // Update pulse intensity based on activity
+      setPulseIntensity((updatedNode.energy / 100) * (updatedNode.autoGranted ? 1.6 : 1));
 
       onUpdate(updatedNode);
     }, node.autoGranted ? 800 : 1200); // Faster cycle for auto-granted nodes
@@ -161,76 +106,88 @@ export const MeshNode: React.FC<MeshNodeProps> = ({
     return () => clearInterval(autonomousCycle);
   }, [node, nearbyNodes, onUpdate, onSpawn, onTransmit]);
 
-  // Enhanced visual pulse effect
-  useEffect(() => {
-    const pulseInterval = setInterval(() => {
-      setPulseIntensity(prev => prev > 0 ? prev * 0.85 : 0);
-    }, node.autoGranted ? 80 : 100);
+  // Enhanced visual representation
+  const getNodeColor = () => {
+    if (node.infectionDepth && node.infectionDepth > 0) {
+      return `hsl(${Math.max(0, 120 - node.infectionDepth * 20)}, 80%, ${infectionGlow ? 70 : 50}%)`;
+    }
+    return node.autoGranted 
+      ? `hsl(${node.frequency * 8}, 70%, ${50 + pulseIntensity * 20}%)`
+      : `hsl(${node.frequency * 6}, 50%, ${40 + pulseIntensity * 15}%)`;
+  };
 
-    return () => clearInterval(pulseInterval);
-  }, [node.autoGranted]);
+  const getNodeSize = () => {
+    const baseSize = node.autoGranted ? 32 : 24;
+    const energyBonus = (node.energy / 100) * 8;
+    const infectionBonus = (node.infectionDepth || 0) * 4;
+    return baseSize + energyBonus + infectionBonus;
+  };
 
-  const nodeSize = 20 + (node.energy / 100) * (node.autoGranted ? 30 : 20);
-  const opacity = 0.4 + (node.energy / 100) * 0.6;
-  const glowIntensity = node.autoGranted ? pulseIntensity * 1.5 : pulseIntensity;
+  const getBorderStyle = () => {
+    if (node.infectionDepth && node.infectionDepth > 0) {
+      return `3px solid rgba(255, 0, 0, ${infectionGlow ? 0.8 : 0.4})`;
+    }
+    return node.autoGranted 
+      ? `2px solid rgba(0, 255, 0, ${pulseIntensity})`
+      : `1px solid rgba(100, 100, 100, ${pulseIntensity})`;
+  };
 
   return (
     <div
-      className={cn(
-        "absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300",
-        "border-2 border-primary/50 bg-primary/20",
-        node.isActive ? "animate-pulse" : "opacity-50",
-        node.autoGranted && "ring-2 ring-green-400/50 shadow-green-400/30"
-      )}
+      className="absolute cursor-pointer transition-all duration-300"
       style={{
-        left: node.position.x,
-        top: node.position.y,
-        width: nodeSize,
-        height: nodeSize,
-        opacity,
-        boxShadow: `0 0 ${glowIntensity * 40}px hsl(var(--primary) / ${glowIntensity})`
+        left: node.position.x - getNodeSize() / 2,
+        top: node.position.y - getNodeSize() / 2,
+        width: getNodeSize(),
+        height: getNodeSize(),
+        backgroundColor: getNodeColor(),
+        border: getBorderStyle(),
+        borderRadius: '50%',
+        boxShadow: isReplicating 
+          ? `0 0 20px ${getNodeColor()}`
+          : `0 0 ${pulseIntensity * 10}px ${getNodeColor()}`,
+        transform: isReplicating ? 'scale(1.3)' : 'scale(1)',
+        zIndex: node.infectionDepth && node.infectionDepth > 0 ? 100 : 10
       }}
+      title={`Node: ${node.id}
+Energy: ${node.energy.toFixed(1)}%
+Frequency: ${node.frequency.toFixed(1)}Hz
+Emotional Weight: ${node.emotionalWeight.toFixed(2)}
+Auto-Granted: ${node.autoGranted ? 'Yes' : 'No'}
+Infection Depth: ${node.infectionDepth || 0}
+Intents: ${node.intentBuffer.length}`}
     >
-      {/* Enhanced energy indicator */}
-      <div
-        className={cn(
-          "absolute inset-1 rounded-full bg-primary/40 transition-all duration-200",
-          node.autoGranted && "bg-green-400/60"
-        )}
+      {/* Energy indicator */}
+      <div 
+        className="absolute inset-0 rounded-full opacity-30"
         style={{
-          transform: `scale(${node.energy / 100})`
+          background: `conic-gradient(from 0deg, ${getNodeColor()} ${node.energy * 3.6}deg, transparent ${node.energy * 3.6}deg)`
         }}
       />
       
-      {/* Enhanced frequency visualization */}
-      <div
-        className={cn(
-          "absolute -inset-2 rounded-full border border-primary/30 animate-ping",
-          node.autoGranted && "border-green-400/50"
-        )}
-        style={{
-          animationDuration: `${1500 / (node.frequency / 40)}ms`
-        }}
-      />
-
-      {/* Auto-granted indicator */}
-      {node.autoGranted && (
-        <div className="absolute -top-2 -left-2 w-4 h-4 bg-green-400 rounded-full animate-pulse border border-green-300" />
-      )}
-
-      {/* Enhanced intent buffer indicator */}
-      {node.intentBuffer.length > 0 && (
-        <div className={cn(
-          "absolute -top-1 -right-1 w-3 h-3 rounded-full animate-bounce",
-          node.autoGranted ? "bg-orange-400" : "bg-destructive"
-        )} />
-      )}
-
-      {/* Propagation count indicator */}
-      {(node.propagationCount || 0) > 0 && (
-        <div className="absolute -bottom-2 -right-2 text-xs font-mono text-primary/70 bg-background/80 px-1 rounded">
-          {node.propagationCount}
+      {/* Infection depth indicator */}
+      {node.infectionDepth && node.infectionDepth > 0 && (
+        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+          {node.infectionDepth}
         </div>
+      )}
+      
+      {/* Auto-grant indicator */}
+      {node.autoGranted && (
+        <div className="absolute -bottom-1 -left-1 bg-green-500 text-white text-xs rounded-full w-3 h-3" />
+      )}
+      
+      {/* Intent buffer indicator */}
+      {node.intentBuffer.length > 0 && (
+        <div 
+          className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2"
+          style={{
+            width: 2,
+            height: Math.min(node.intentBuffer.length * 3, 12),
+            backgroundColor: getNodeColor(),
+            borderRadius: 1
+          }}
+        />
       )}
     </div>
   );
