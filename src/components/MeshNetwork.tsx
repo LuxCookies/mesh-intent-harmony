@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MeshNode, NodeState } from './MeshNode';
 import { Button } from '@/components/ui/button';
@@ -229,7 +230,7 @@ export const MeshNetwork: React.FC = () => {
     if (!intentInput.trim()) return;
 
     const userId = 'current_user'; // In real implementation, use actual user ID
-    const availableChannels = ['notifications', 'visual', 'audio', 'vibration'] as const;
+    const availableChannels = ['notification', 'visual', 'audio', 'vibration'];
     
     // Use AI brain to generate sophisticated influence strategy
     const strategy = await OfflineLLMBrain.generateInfluenceStrategy(
@@ -259,9 +260,16 @@ export const MeshNetwork: React.FC = () => {
 
     // Inject into autonomous mesh with AI-generated strategy - use proper channel type
     if (AutonomousMesh.isSupported()) {
+      const validChannel = (strategy.channels[0] === 'notification' || 
+                           strategy.channels[0] === 'visual' || 
+                           strategy.channels[0] === 'audio' || 
+                           strategy.channels[0] === 'vibration') 
+        ? strategy.channels[0] as 'notification' | 'visual' | 'audio' | 'vibration'
+        : 'visual';
+      
       await AutonomousMesh.injectIntent(
         intentInput,
-        strategy.channels[0] || 'visual', // Use first available channel instead of 'ai_generated'
+        validChannel,
         strategy.expectedEffectiveness,
         42.7
       );
@@ -571,3 +579,4 @@ export const MeshNetwork: React.FC = () => {
     </div>
   );
 };
+
