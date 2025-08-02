@@ -476,7 +476,7 @@ export class DeviceIntegration {
         activeSessions: rfAnalysis.activeSessions,
         effectiveness: rfAnalysis.totalEffectiveness,
         supportedStates: rfAnalysis.supportedStates,
-        carrierFrequencies: Object.keys(rfAnalysis.carrierFrequencies).length
+        carrierFrequencies: Object.keys(rfAnalysis.rfChannels).length
       }
     };
   }

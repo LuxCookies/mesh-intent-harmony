@@ -1,3 +1,82 @@
+// Web API type definitions for hardware interfaces
+declare global {
+  interface BluetoothDevice {
+    id: string;
+    name?: string;
+    gatt?: BluetoothRemoteGATT;
+  }
+
+  interface BluetoothRemoteGATT {
+    connected: boolean;
+    connect(): Promise<BluetoothRemoteGATTServer>;
+    disconnect(): void;
+  }
+
+  interface BluetoothRemoteGATTServer {
+    connected: boolean;
+    getPrimaryServices(): Promise<BluetoothRemoteGATTService[]>;
+  }
+
+  interface BluetoothRemoteGATTService {
+    getCharacteristics(): Promise<BluetoothRemoteGATTCharacteristic[]>;
+  }
+
+  interface BluetoothRemoteGATTCharacteristic {
+    properties: {
+      write: boolean;
+      writeWithoutResponse: boolean;
+    };
+    writeValue(value: ArrayBuffer): Promise<void>;
+  }
+
+  interface USBDevice {
+    configuration: USBConfiguration | null;
+    open(): Promise<void>;
+    close(): Promise<void>;
+    selectConfiguration(configurationValue: number): Promise<void>;
+    claimInterface(interfaceNumber: number): Promise<void>;
+    transferOut(endpointNumber: number, data: ArrayBuffer): Promise<USBOutTransferResult>;
+  }
+
+  interface USBConfiguration {
+    configurationValue: number;
+  }
+
+  interface USBOutTransferResult {
+    status: string;
+    bytesWritten: number;
+  }
+
+  interface SerialPort {
+    readable?: ReadableStream;
+    writable?: WritableStream;
+    open(options: { baudRate: number }): Promise<void>;
+    close(): Promise<void>;
+  }
+
+  interface HIDDevice {
+    vendorId: number;
+    productId: number;
+    open(): Promise<void>;
+    close(): Promise<void>;
+  }
+
+  interface Navigator {
+    bluetooth?: {
+      requestDevice(options: any): Promise<BluetoothDevice>;
+    };
+    usb?: {
+      requestDevice(options: any): Promise<USBDevice>;
+    };
+    serial?: {
+      requestPort(): Promise<SerialPort>;
+    };
+    hid?: {
+      requestDevice(options: any): Promise<HIDDevice[]>;
+    };
+  }
+}
+
 interface BrainwaveState {
   frequency: number; // Hz
   amplitude: number; // 0-1
