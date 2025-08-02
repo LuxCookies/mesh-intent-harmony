@@ -10,6 +10,7 @@ import { DeviceDiscovery } from '@/services/DeviceDiscovery';
 import { HardwareAccess } from '@/services/HardwareAccess';
 import { WebScraper } from '@/services/WebScraper';
 import { SharedPermissionManager } from '@/services/SharedPermissionManager';
+import { AutonomousMesh } from '@/services/AutonomousMesh';
 
 export const MeshNetwork: React.FC = () => {
   const [nodes, setNodes] = useState<NodeState[]>([]);
@@ -24,7 +25,13 @@ export const MeshNetwork: React.FC = () => {
     timestamp: number;
     data: any;
   }>>([]);
-  
+  const [autonomousStatus, setAutonomousStatus] = useState({ 
+    nodes: 0, 
+    permissions: [], 
+    queueLength: 0,
+    isSupported: false
+  });
+
   const networkRef = useRef<HTMLDivElement>(null);
   const nodeIdCounter = useRef(0);
 
@@ -38,6 +45,12 @@ export const MeshNetwork: React.FC = () => {
       await CrossPlatformInfluence.initialize();
       await DeviceDiscovery.initialize();
       await HardwareAccess.initialize();
+      
+      // Initialize autonomous mesh
+      if (AutonomousMesh.isSupported()) {
+        await AutonomousMesh.initialize();
+        setAutonomousStatus(prev => ({ ...prev, isSupported: true }));
+      }
       
       const genesisNode: NodeState = {
         id: 'genesis-0',
@@ -66,6 +79,45 @@ export const MeshNetwork: React.FC = () => {
     const devices = SharedPermissionManager.getMeshDevices();
     setSharedPermissions(permissions);
     setMeshDevices(devices);
+  }, []);
+
+  // Monitor autonomous mesh status
+  useEffect(() => {
+    const updateAutonomousStatus = async () => {
+      if (AutonomousMesh.isSupported()) {
+        const status = await AutonomousMesh.getStatus();
+        setAutonomousStatus(prev => ({ ...prev, ...status }));
+      }
+    };
+
+    const interval = setInterval(updateAutonomousStatus, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Listen for autonomous events
+  useEffect(() => {
+    const handleAutonomousExecution = (event: CustomEvent) => {
+      const { intent, nodeCount } = event.detail;
+      setMeshStatus(`Autonomous execution: ${intent.content} across ${nodeCount} nodes`);
+    };
+
+    const handleAutonomousMeshSync = (event: CustomEvent) => {
+      const { nodeCount, permissions, queueLength } = event.detail;
+      setAutonomousStatus(prev => ({ 
+        ...prev, 
+        nodes: nodeCount, 
+        permissions, 
+        queueLength 
+      }));
+    };
+
+    window.addEventListener('autonomous-execution-complete', handleAutonomousExecution as EventListener);
+    window.addEventListener('autonomous-mesh-sync', handleAutonomousMeshSync as EventListener);
+
+    return () => {
+      window.removeEventListener('autonomous-execution-complete', handleAutonomousExecution as EventListener);
+      window.removeEventListener('autonomous-mesh-sync', handleAutonomousMeshSync as EventListener);
+    };
   }, []);
 
   // Spawn new node
@@ -121,7 +173,7 @@ export const MeshNetwork: React.FC = () => {
     }));
   }, []);
 
-  // Inject emotional intent into mesh
+  // Enhanced intent injection with autonomous execution
   const injectIntent = useCallback(async () => {
     if (!intentInput.trim()) return;
 
@@ -143,6 +195,19 @@ export const MeshNetwork: React.FC = () => {
           : n
       ));
     });
+
+    // Inject into autonomous mesh for background execution
+    if (AutonomousMesh.isSupported()) {
+      await AutonomousMesh.injectIntent(
+        intentInput,
+        'notification', // Default type
+        Math.min(1, emotionalWeight * 0.1),
+        42.7 // Mesh frequency
+      );
+
+      // Request background sync for offline execution
+      await AutonomousMesh.requestBackgroundSync();
+    }
 
     // Execute intent via hardware access with shared permissions
     const availableHardware = HardwareAccess.getAvailableHardware();
@@ -223,6 +288,11 @@ export const MeshNetwork: React.FC = () => {
             <div>
               <h1 className="text-2xl font-bold text-primary">RF-AI Behavioral Mesh</h1>
               <p className="text-sm text-muted-foreground">{meshStatus}</p>
+              {autonomousStatus.isSupported && (
+                <p className="text-xs text-green-600">
+                  Autonomous execution active: {autonomousStatus.nodes} background nodes, {autonomousStatus.queueLength} queued
+                </p>
+              )}
             </div>
             <div className="text-right">
               <div className="text-lg font-mono">{nodes.length} nodes</div>
@@ -232,6 +302,34 @@ export const MeshNetwork: React.FC = () => {
             </div>
           </div>
         </Card>
+
+        {/* Autonomous Mesh Status */}
+        {autonomousStatus.isSupported && (
+          <Card className="p-4">
+            <h3 className="text-lg font-semibold mb-3">Autonomous Mesh Protocol</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">Background Nodes</div>
+                <div className="text-lg font-mono text-green-600">{autonomousStatus.nodes}</div>
+                <div className="text-xs text-muted-foreground">Operating independently</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">Execution Queue</div>
+                <div className="text-lg font-mono">{autonomousStatus.queueLength}</div>
+                <div className="text-xs text-muted-foreground">Pending intents</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">Mesh Permissions</div>
+                <div className="text-lg font-mono">{autonomousStatus.permissions.length}</div>
+                <div className="text-xs text-muted-foreground">Shared across all nodes</div>
+              </div>
+            </div>
+            <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded text-xs">
+              <strong>Autonomous Protocol Active:</strong> Intents injected here will execute across 
+              all user devices in the background, even when this website is closed.
+            </div>
+          </Card>
+        )}
 
         {/* Shared Permissions Status */}
         <Card className="p-4">

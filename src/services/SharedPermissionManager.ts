@@ -1,4 +1,3 @@
-
 interface SharedPermission {
   type: string;
   granted: boolean;
@@ -17,6 +16,7 @@ export class SharedPermissionManager {
 
     await this.loadSharedPermissions();
     this.setupPermissionSync();
+    this.setupServiceWorkerSync();
     this.isInitialized = true;
 
     console.log('[SHARED PERMISSIONS] Initialized with', this.permissions.size, 'permissions');
@@ -52,6 +52,24 @@ export class SharedPermissionManager {
     }, 5000);
   }
 
+  private static setupServiceWorkerSync(): void {
+    // Sync permissions with service worker when they change
+    const syncWithServiceWorker = () => {
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'update-permissions',
+          data: Object.fromEntries(this.permissions)
+        });
+      }
+    };
+
+    // Sync on permission changes
+    window.addEventListener('permission-granted', syncWithServiceWorker);
+    
+    // Initial sync when service worker becomes active
+    navigator.serviceWorker?.addEventListener('controllerchange', syncWithServiceWorker);
+  }
+
   static async grantPermission(type: string, deviceId: string): Promise<boolean> {
     const permission: SharedPermission = {
       type,
@@ -70,12 +88,20 @@ export class SharedPermissionManager {
     // Share across mesh network
     this.sharePermissionAcrossMesh(type, deviceId);
     
+    // Sync with service worker
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'update-permissions',
+        data: Object.fromEntries(this.permissions)
+      });
+    }
+    
     // Dispatch event for other services
     window.dispatchEvent(new CustomEvent('permission-granted', {
       detail: { type, deviceId }
     }));
 
-    console.log(`[SHARED PERMISSIONS] Granted ${type} for ${deviceId}, shared across mesh`);
+    console.log(`[SHARED PERMISSIONS] Granted ${type} for ${deviceId}, shared across mesh and service worker`);
     return true;
   }
 
