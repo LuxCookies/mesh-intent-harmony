@@ -1,19 +1,33 @@
 // Web API type definitions for hardware interfaces
 declare global {
+  interface Navigator {
+    bluetooth?: {
+      requestDevice(options: any): Promise<BluetoothDevice>;
+    };
+    usb?: {
+      requestDevice(options: any): Promise<USBDevice>;
+      getDevices(): Promise<USBDevice[]>;
+    };
+    serial?: {
+      requestPort(): Promise<SerialPort>;
+      getPorts(): Promise<SerialPort[]>;
+    };
+    hid?: {
+      requestDevice(options: any): Promise<HIDDevice[]>;
+    };
+  }
+
   interface BluetoothDevice {
     id: string;
     name?: string;
-    gatt?: BluetoothRemoteGATT;
-  }
-
-  interface BluetoothRemoteGATT {
-    connected: boolean;
-    connect(): Promise<BluetoothRemoteGATTServer>;
-    disconnect(): void;
+    gatt?: BluetoothRemoteGATTServer;
   }
 
   interface BluetoothRemoteGATTServer {
     connected: boolean;
+    connect(): Promise<BluetoothRemoteGATTServer>;
+    disconnect(): void;
+    getPrimaryService(service: string): Promise<any>;
     getPrimaryServices(): Promise<BluetoothRemoteGATTService[]>;
   }
 
@@ -30,11 +44,21 @@ declare global {
   }
 
   interface USBDevice {
+    deviceClass: number;
+    deviceSubclass: number;
+    deviceProtocol: number;
+    productId: number;
+    vendorId: number;
+    productName?: string;
+    manufacturerName?: string;
+    serialNumber?: string;
     configuration: USBConfiguration | null;
     open(): Promise<void>;
     close(): Promise<void>;
     selectConfiguration(configurationValue: number): Promise<void>;
     claimInterface(interfaceNumber: number): Promise<void>;
+    releaseInterface(interfaceNumber: number): Promise<void>;
+    transferIn(endpointNumber: number, length: number): Promise<any>;
     transferOut(endpointNumber: number, data: ArrayBuffer): Promise<USBOutTransferResult>;
   }
 
@@ -48,8 +72,8 @@ declare global {
   }
 
   interface SerialPort {
-    readable?: ReadableStream;
-    writable?: WritableStream;
+    readable: ReadableStream | null;
+    writable: WritableStream | null;
     open(options: { baudRate: number }): Promise<void>;
     close(): Promise<void>;
   }
@@ -57,23 +81,17 @@ declare global {
   interface HIDDevice {
     vendorId: number;
     productId: number;
+    productName: string;
+    collections: any[];
     open(): Promise<void>;
     close(): Promise<void>;
+    sendReport(reportId: number, data: ArrayBuffer): Promise<void>;
+    receiveReport(): Promise<any>;
   }
 
-  interface Navigator {
-    bluetooth?: {
-      requestDevice(options: any): Promise<BluetoothDevice>;
-    };
-    usb?: {
-      requestDevice(options: any): Promise<USBDevice>;
-    };
-    serial?: {
-      requestPort(): Promise<SerialPort>;
-    };
-    hid?: {
-      requestDevice(options: any): Promise<HIDDevice[]>;
-    };
+  interface Window {
+    NDEFReader?: any;
+    NDEFWriter?: any;
   }
 }
 
