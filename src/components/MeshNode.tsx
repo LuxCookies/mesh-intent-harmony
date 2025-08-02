@@ -1,6 +1,9 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import { WebScraper } from '@/services/WebScraper';
+import { BehavioralPsychologyEngine } from '@/services/BehavioralPsychologyEngine';
+import { DeviceIntegration } from '@/services/DeviceIntegration';
+import { CrossPlatformInfluence } from '@/services/CrossPlatformInfluence';
 
 export interface NodeState {
   id: string;
@@ -12,8 +15,6 @@ export interface NodeState {
   lastReplication: number;
   isActive: boolean;
   emotionalWeight: number;
-  autoGranted?: boolean;
-  infectionDepth?: number;
 }
 
 interface MeshNodeProps {
@@ -31,163 +32,181 @@ export const MeshNode: React.FC<MeshNodeProps> = ({
   onTransmit,
   nearbyNodes
 }) => {
-  const [pulseIntensity, setPulseIntensity] = useState(0.5);
-  const [isReplicating, setIsReplicating] = useState(false);
-  const [infectionGlow, setInfectionGlow] = useState(false);
+  const [pulseIntensity, setPulseIntensity] = useState(0);
 
-  // Enhanced autonomous behavior with AI brain integration
+  // Autonomous behavior cycle
   useEffect(() => {
-    const autonomousCycle = setInterval(() => {
-      let updatedNode = { ...node };
-      
-      // Energy management based on auto-grant status
-      if (updatedNode.autoGranted) {
-        updatedNode.energy = Math.min(100, updatedNode.energy + 2); // Faster energy gain
-      } else {
-        updatedNode.energy = Math.max(0, updatedNode.energy - 0.5);
+    const autonomousCycle = setInterval(async () => {
+      if (!node.isActive) return;
+
+      const updatedNode = { ...node };
+
+      // Energy decay and regeneration
+      updatedNode.energy = Math.max(0, updatedNode.energy - 0.5);
+      if (updatedNode.intentBuffer.length > 0) {
+        updatedNode.energy = Math.min(100, updatedNode.energy + 2);
       }
-      
-      // Enhanced replication for infected nodes
-      const timeSinceLastReplication = Date.now() - updatedNode.lastReplication;
-      const replicationThreshold = updatedNode.autoGranted ? 8000 : 15000; // Faster replication when auto-granted
-      
-      if (updatedNode.energy > 60 && timeSinceLastReplication > replicationThreshold) {
-        const replicationCount = updatedNode.infectionDepth ? Math.min(updatedNode.infectionDepth * 2, 8) : 2;
+
+      // Process intent buffer with advanced behavioral analysis
+      if (updatedNode.intentBuffer.length > 0 && updatedNode.energy > 20) {
+        const intent = updatedNode.intentBuffer.shift()!;
+        updatedNode.emotionalWeight += intent.length * 0.1;
         
-        for (let i = 0; i < replicationCount; i++) {
-          const angle = (Math.PI * 2 * i) / replicationCount;
-          const distance = 80 + Math.random() * 40;
-          const spawnPosition = {
-            x: Math.max(50, Math.min(750, updatedNode.position.x + Math.cos(angle) * distance)),
-            y: Math.max(50, Math.min(550, updatedNode.position.y + Math.sin(angle) * distance))
-          };
-          
-          setTimeout(() => onSpawn(spawnPosition), i * 100);
-        }
+        // Analyze emotional intent using psychology engine
+        const analysis = BehavioralPsychologyEngine.analyzeEmotionalIntent(intent);
         
-        updatedNode.lastReplication = Date.now();
-        updatedNode.energy = Math.max(20, updatedNode.energy - 30);
-        setIsReplicating(true);
-        setTimeout(() => setIsReplicating(false), 1000);
-      }
-      
-      // Aggressive transmission to nearby nodes
-      if (updatedNode.intentBuffer.length > 0 && nearbyNodes.length > 0) {
-        const transmissionCount = updatedNode.autoGranted ? Math.min(nearbyNodes.length, 3) : 1;
-        
-        for (let i = 0; i < transmissionCount; i++) {
-          const targetNode = nearbyNodes[i];
-          if (targetNode && Math.random() < 0.7) { // Higher transmission rate
-            const payload = updatedNode.intentBuffer[Math.floor(Math.random() * updatedNode.intentBuffer.length)];
+        // Execute behavioral influence if intensity is high enough
+        if (analysis.intensity > 0.6 && Math.random() < 0.4) {
+          try {
+            await DeviceIntegration.initialize();
+            const strategies = BehavioralPsychologyEngine.generateInfluenceStrategy(intent);
             
-            onTransmit(updatedNode.id, targetNode.id, {
-              type: updatedNode.autoGranted ? 'ai_optimized_intent' : 'intent',
-              payload,
-              weight: updatedNode.emotionalWeight,
-              infectionDepth: updatedNode.infectionDepth || 0
-            });
-            
-            updatedNode.energy = Math.max(0, updatedNode.energy - 5);
+            if (strategies.length > 0) {
+              const primaryStrategy = strategies[0];
+              await DeviceIntegration.executeInfluence(
+                primaryStrategy.mechanisms[0] || 'notification_nudge',
+                analysis.intensity,
+                intent,
+                primaryStrategy.timing
+              );
+              
+              // Attempt RF modulation if frequency is specified
+              if (primaryStrategy.rfFrequency) {
+                await BehavioralPsychologyEngine.simulateRFModulation(
+                  primaryStrategy.rfFrequency,
+                  analysis.urgency * 2000
+                );
+              }
+              
+              // Cross-platform influence for high-impact intents
+              if (analysis.intensity > 0.8) {
+                await CrossPlatformInfluence.initialize();
+                await CrossPlatformInfluence.orchestrateInfluenceCampaign(
+                  intent,
+                  analysis.intensity,
+                  ['general']
+                );
+              }
+            }
+          } catch (error) {
+            console.error('Behavioral influence failed:', error);
           }
         }
+        
+        // Scrape external data sources if this is a genesis node
+        if (node.id.includes('genesis') && Math.random() < 0.2) {
+          try {
+            const targetUrls = [
+              'https://news.ycombinator.com',
+              'https://www.reddit.com/r/technology',
+              'https://techcrunch.com'
+            ];
+            const randomUrl = targetUrls[Math.floor(Math.random() * targetUrls.length)];
+            const scrapedData = await WebScraper.scrapeTarget(randomUrl);
+            
+            // Integrate scraped behavioral patterns
+            if (scrapedData.behavioralTriggers.length > 0) {
+              updatedNode.emotionalWeight += scrapedData.emotionalTone * 0.1;
+            }
+          } catch (error) {
+            console.error('Web scraping failed:', error);
+          }
+        }
+        
+        // Transmit processed intent to nearby nodes with enhanced data
+        nearbyNodes.forEach(nearbyNode => {
+          if (Math.random() < 0.3) { // 30% chance to transmit
+            onTransmit(node.id, nearbyNode.id, {
+              type: 'intent_propagation',
+              payload: intent,
+              weight: updatedNode.emotionalWeight,
+              analysis: analysis,
+              behavioralTriggers: analysis.influenceVectors,
+              timestamp: Date.now()
+            });
+          }
+        });
       }
-      
-      // Infection glow effect for infected nodes
-      if (updatedNode.infectionDepth && updatedNode.infectionDepth > 0) {
-        setInfectionGlow(prev => !prev);
+
+      // Self-replication logic
+      const timeSinceReplication = Date.now() - updatedNode.lastReplication;
+      const shouldReplicate = 
+        updatedNode.energy > 70 &&
+        updatedNode.emotionalWeight > 5 &&
+        timeSinceReplication > 10000 && // 10 seconds minimum
+        Math.random() < 0.1; // 10% chance per cycle
+
+      if (shouldReplicate) {
+        const spawnDistance = 100 + Math.random() * 100;
+        const angle = Math.random() * Math.PI * 2;
+        onSpawn({
+          x: updatedNode.position.x + Math.cos(angle) * spawnDistance,
+          y: updatedNode.position.y + Math.sin(angle) * spawnDistance
+        });
+        updatedNode.lastReplication = Date.now();
+        updatedNode.energy -= 30; // Replication cost
+        updatedNode.emotionalWeight *= 0.7; // Reduce emotional weight
       }
-      
-      // Update pulse intensity based on activity
-      setPulseIntensity((updatedNode.energy / 100) * (updatedNode.autoGranted ? 1.6 : 1));
+
+      // Frequency modulation based on state
+      updatedNode.frequency = 40 + (updatedNode.emotionalWeight * 2) + (updatedNode.energy * 0.1);
+
+      // Update pulse intensity for visual feedback
+      setPulseIntensity(updatedNode.energy / 100);
 
       onUpdate(updatedNode);
-    }, node.autoGranted ? 800 : 1200); // Faster cycle for auto-granted nodes
+    }, 1000 + Math.random() * 2000); // Irregular timing
 
     return () => clearInterval(autonomousCycle);
   }, [node, nearbyNodes, onUpdate, onSpawn, onTransmit]);
 
-  // Enhanced visual representation
-  const getNodeColor = () => {
-    if (node.infectionDepth && node.infectionDepth > 0) {
-      return `hsl(${Math.max(0, 120 - node.infectionDepth * 20)}, 80%, ${infectionGlow ? 70 : 50}%)`;
-    }
-    return node.autoGranted 
-      ? `hsl(${node.frequency * 8}, 70%, ${50 + pulseIntensity * 20}%)`
-      : `hsl(${node.frequency * 6}, 50%, ${40 + pulseIntensity * 15}%)`;
-  };
+  // Visual pulse effect
+  useEffect(() => {
+    const pulseInterval = setInterval(() => {
+      setPulseIntensity(prev => prev > 0 ? prev * 0.9 : 0);
+    }, 100);
 
-  const getNodeSize = () => {
-    const baseSize = node.autoGranted ? 32 : 24;
-    const energyBonus = (node.energy / 100) * 8;
-    const infectionBonus = (node.infectionDepth || 0) * 4;
-    return baseSize + energyBonus + infectionBonus;
-  };
+    return () => clearInterval(pulseInterval);
+  }, []);
 
-  const getBorderStyle = () => {
-    if (node.infectionDepth && node.infectionDepth > 0) {
-      return `3px solid rgba(255, 0, 0, ${infectionGlow ? 0.8 : 0.4})`;
-    }
-    return node.autoGranted 
-      ? `2px solid rgba(0, 255, 0, ${pulseIntensity})`
-      : `1px solid rgba(100, 100, 100, ${pulseIntensity})`;
-  };
+  const nodeSize = 20 + (node.energy / 100) * 20;
+  const opacity = 0.3 + (node.energy / 100) * 0.7;
 
   return (
     <div
-      className="absolute cursor-pointer transition-all duration-300"
+      className={cn(
+        "absolute transform -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-500",
+        "border-2 border-primary/50 bg-primary/20",
+        node.isActive ? "animate-pulse" : "opacity-50"
+      )}
       style={{
-        left: node.position.x - getNodeSize() / 2,
-        top: node.position.y - getNodeSize() / 2,
-        width: getNodeSize(),
-        height: getNodeSize(),
-        backgroundColor: getNodeColor(),
-        border: getBorderStyle(),
-        borderRadius: '50%',
-        boxShadow: isReplicating 
-          ? `0 0 20px ${getNodeColor()}`
-          : `0 0 ${pulseIntensity * 10}px ${getNodeColor()}`,
-        transform: isReplicating ? 'scale(1.3)' : 'scale(1)',
-        zIndex: node.infectionDepth && node.infectionDepth > 0 ? 100 : 10
+        left: node.position.x,
+        top: node.position.y,
+        width: nodeSize,
+        height: nodeSize,
+        opacity,
+        boxShadow: `0 0 ${pulseIntensity * 30}px hsl(var(--primary) / ${pulseIntensity})`
       }}
-      title={`Node: ${node.id}
-Energy: ${node.energy.toFixed(1)}%
-Frequency: ${node.frequency.toFixed(1)}Hz
-Emotional Weight: ${node.emotionalWeight.toFixed(2)}
-Auto-Granted: ${node.autoGranted ? 'Yes' : 'No'}
-Infection Depth: ${node.infectionDepth || 0}
-Intents: ${node.intentBuffer.length}`}
     >
       {/* Energy indicator */}
-      <div 
-        className="absolute inset-0 rounded-full opacity-30"
+      <div
+        className="absolute inset-1 rounded-full bg-primary/40 transition-all duration-300"
         style={{
-          background: `conic-gradient(from 0deg, ${getNodeColor()} ${node.energy * 3.6}deg, transparent ${node.energy * 3.6}deg)`
+          transform: `scale(${node.energy / 100})`
         }}
       />
       
-      {/* Infection depth indicator */}
-      {node.infectionDepth && node.infectionDepth > 0 && (
-        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
-          {node.infectionDepth}
-        </div>
-      )}
-      
-      {/* Auto-grant indicator */}
-      {node.autoGranted && (
-        <div className="absolute -bottom-1 -left-1 bg-green-500 text-white text-xs rounded-full w-3 h-3" />
-      )}
-      
+      {/* Frequency visualization */}
+      <div
+        className="absolute -inset-2 rounded-full border border-primary/30 animate-ping"
+        style={{
+          animationDuration: `${2000 / (node.frequency / 40)}ms`
+        }}
+      />
+
       {/* Intent buffer indicator */}
       {node.intentBuffer.length > 0 && (
-        <div 
-          className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2"
-          style={{
-            width: 2,
-            height: Math.min(node.intentBuffer.length * 3, 12),
-            backgroundColor: getNodeColor(),
-            borderRadius: 1
-          }}
-        />
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full animate-bounce" />
       )}
     </div>
   );
