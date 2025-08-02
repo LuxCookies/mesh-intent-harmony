@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { BehavioralPsychologyEngine } from '@/services/BehavioralPsychologyEngine';
 import { DeviceIntegration } from '@/services/DeviceIntegration';
 import { CrossPlatformInfluence } from '@/services/CrossPlatformInfluence';
+import { DeviceDiscovery } from '@/services/DeviceDiscovery';
+import { HardwareAccess } from '@/services/HardwareAccess';
 import { WebScraper } from '@/services/WebScraper';
 
 export const MeshNetwork: React.FC = () => {
@@ -30,6 +32,8 @@ export const MeshNetwork: React.FC = () => {
       BehavioralPsychologyEngine.initialize();
       await DeviceIntegration.initialize();
       await CrossPlatformInfluence.initialize();
+      await DeviceDiscovery.initialize();
+      await HardwareAccess.initialize();
       
       const genesisNode: NodeState = {
         id: 'genesis-0',
@@ -44,7 +48,7 @@ export const MeshNetwork: React.FC = () => {
       };
       
       setNodes([genesisNode]);
-      setMeshStatus('Behavioral mesh active. All influence systems online. Ready for emotional intent...');
+      setMeshStatus('Behavioral mesh active. Device propagation enabled. Hardware access initialized.');
     };
     
     initializeMesh();
@@ -104,7 +108,7 @@ export const MeshNetwork: React.FC = () => {
   }, []);
 
   // Inject emotional intent into mesh
-  const injectIntent = useCallback(() => {
+  const injectIntent = useCallback(async () => {
     if (!intentInput.trim()) return;
 
     const emotionalWeight = intentInput.length + (intentInput.match(/[!?]/g)?.length || 0) * 2;
@@ -126,7 +130,17 @@ export const MeshNetwork: React.FC = () => {
       ));
     });
 
-    setMeshStatus(`Intent injected into ${activeNodes.length} nodes. Processing...`);
+    // Execute intent via hardware access
+    const availableHardware = HardwareAccess.getAvailableHardware();
+    if (availableHardware.length > 0) {
+      await HardwareAccess.executeUserIntent(
+        intentInput,
+        availableHardware.slice(0, 3), // Use up to 3 hardware components
+        0.7 // High intensity
+      );
+    }
+
+    setMeshStatus(`Intent injected into ${activeNodes.length} nodes. Hardware engaged.`);
     setIntentInput('');
   }, [intentInput, nodes]);
 
@@ -144,6 +158,35 @@ export const MeshNetwork: React.FC = () => {
       return distance < 150; // Connection range
     });
   }, [nodes]);
+
+  // Handle device propagation
+  useEffect(() => {
+    const handlePropagation = (event: CustomEvent) => {
+      const { device, nodeCount, method } = event.detail;
+      
+      // Create new nodes based on device propagation
+      const newNodes = Array.from({ length: nodeCount }, (_, i) => ({
+        id: `${device.id}_node_${i}_${Date.now()}`,
+        position: {
+          x: Math.random() * 750,
+          y: Math.random() * 550
+        },
+        energy: 60 + Math.random() * 40,
+        connections: [],
+        intentBuffer: [],
+        frequency: 40 + Math.random() * 20,
+        lastReplication: Date.now(),
+        isActive: true,
+        emotionalWeight: Math.random() * 2
+      }));
+
+      setNodes(prev => [...prev, ...newNodes]);
+      setMeshStatus(`Propagated to ${device.id}: +${nodeCount} nodes via ${method}`);
+    };
+
+    window.addEventListener('mesh-propagation', handlePropagation as EventListener);
+    return () => window.removeEventListener('mesh-propagation', handlePropagation as EventListener);
+  }, []);
 
   // Auto-remove old transmissions
   useEffect(() => {
