@@ -156,7 +156,7 @@ export const MeshNode: React.FC<MeshNodeProps> = ({
       setPulseIntensity((updatedNode.energy / 100) * (updatedNode.autoGranted ? 1.4 : 1));
 
       onUpdate(updatedNode);
-    }, updatedNode.autoGranted ? 800 : 1200); // Faster cycle for auto-granted nodes
+    }, node.autoGranted ? 800 : 1200); // Faster cycle for auto-granted nodes
 
     return () => clearInterval(autonomousCycle);
   }, [node, nearbyNodes, onUpdate, onSpawn, onTransmit]);
