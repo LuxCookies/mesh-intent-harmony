@@ -30,6 +30,7 @@ export class RealCrossPlatformBridge {
   private static signalingServer: WebSocket | null = null;
   private static isInitialized = false;
   private static messageHandlers: Map<string, Function> = new Map();
+  private static readonly MAX_DEVICES = 40; // Limit to prevent crashes
   private static capabilities: DeviceCapabilities = {
     deviceId: '',
     platform: '',
@@ -222,6 +223,12 @@ export class RealCrossPlatformBridge {
 
   private static async initiateConnection(targetDeviceId: string): Promise<void> {
     if (this.connections.has(targetDeviceId)) return;
+    
+    // Limit total device connections to prevent crashes
+    if (this.connections.size >= this.MAX_DEVICES) {
+      console.warn(`[P2P] Device limit reached (${this.MAX_DEVICES}). Skipping connection to:`, targetDeviceId);
+      return;
+    }
 
     console.log('[P2P] Initiating connection to:', targetDeviceId);
 
@@ -263,6 +270,12 @@ export class RealCrossPlatformBridge {
   }
 
   private static async handleOffer(fromDeviceId: string, offer: RTCSessionDescriptionInit): Promise<void> {
+    // Limit total device connections to prevent crashes
+    if (this.connections.size >= this.MAX_DEVICES) {
+      console.warn(`[P2P] Device limit reached (${this.MAX_DEVICES}). Rejecting offer from:`, fromDeviceId);
+      return;
+    }
+    
     console.log('[P2P] Received offer from:', fromDeviceId);
 
     const connection = new RTCPeerConnection({

@@ -35,6 +35,7 @@ export class EnhancedMeshController {
   private static executions: RealInfluenceExecution[] = [];
   private static isInitialized = false;
   private static masterNode: string = '';
+  private static readonly MAX_MESH_NODES = 40; // Limit to prevent crashes
 
   static async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -124,8 +125,8 @@ export class EnhancedMeshController {
   static optimizePerformance(): void {
     const nodeCount = this.nodes.size;
     
-    // Throttle operations if too many nodes
-    if (nodeCount > 50) {
+    // Throttle operations if approaching limit
+    if (nodeCount > 30) {
       this.isPerformanceOptimized = false;
       console.log('[PERFORMANCE] Throttling operations due to high node count:', nodeCount);
       
@@ -134,6 +135,25 @@ export class EnhancedMeshController {
         this.isPerformanceOptimized = true;
       }, 10000);
     }
+    
+    // Hard limit enforcement
+    if (nodeCount >= this.MAX_MESH_NODES) {
+      console.warn(`[MESH] Node limit reached (${this.MAX_MESH_NODES}). Cleaning up oldest inactive nodes.`);
+      this.cleanupInactiveNodes();
+    }
+  }
+  
+  private static cleanupInactiveNodes(): void {
+    const now = Date.now();
+    const inactiveNodes = Array.from(this.nodes.entries())
+      .filter(([id, node]) => id !== this.masterNode && (now - node.lastActivity > 30000))
+      .sort(([, a], [, b]) => a.lastActivity - b.lastActivity)
+      .slice(0, 10); // Remove up to 10 oldest inactive nodes
+    
+    inactiveNodes.forEach(([nodeId]) => {
+      this.nodes.delete(nodeId);
+      console.log('[CLEANUP] Removed inactive node:', nodeId);
+    });
   }
 
   private static maintainMeshNetwork(): void {
@@ -159,7 +179,7 @@ export class EnhancedMeshController {
     const connectedDevices = RealCrossPlatformBridge.getConnectedDevices();
     
     connectedDevices.forEach(device => {
-      if (!this.nodes.has(device.deviceId)) {
+      if (!this.nodes.has(device.deviceId) && this.nodes.size < this.MAX_MESH_NODES) {
         // Create remote node
         const remoteNode: EnhancedMeshNode = {
           id: `remote_${device.deviceId}`,
