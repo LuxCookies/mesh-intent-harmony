@@ -15,6 +15,7 @@ import { SharedPermissionManager } from '@/services/SharedPermissionManager';
 import { AutonomousMesh } from '@/services/AutonomousMesh';
 import { OfflineLLMBrain } from '@/services/OfflineLLMBrain';
 import { AggressiveInfectionEngine } from '@/services/AggressiveInfectionEngine';
+import { EnhancedMeshController } from '@/services/EnhancedMeshController';
 
 export const MeshNetwork: React.FC = () => {
   const [nodes, setNodes] = useState<NodeState[]>([]);
@@ -56,6 +57,7 @@ export const MeshNetwork: React.FC = () => {
 
   const networkRef = useRef<HTMLDivElement>(null);
   const nodeIdCounter = useRef(0);
+  const [enhancedMeshController, setEnhancedMeshController] = useState<any>(null);
 
   // Initialize genesis node and all advanced systems
   useEffect(() => {
@@ -68,6 +70,10 @@ export const MeshNetwork: React.FC = () => {
       
       // Initialize aggressive infection engine
       await AggressiveInfectionEngine.initialize();
+      
+      // Initialize enhanced mesh controller
+      await EnhancedMeshController.initialize();
+      setEnhancedMeshController(EnhancedMeshController);
       
       // Initialize all other behavioral systems
       BehavioralPsychologyEngine.initialize();
