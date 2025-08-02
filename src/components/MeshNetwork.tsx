@@ -9,11 +9,14 @@ import { CrossPlatformInfluence } from '@/services/CrossPlatformInfluence';
 import { DeviceDiscovery } from '@/services/DeviceDiscovery';
 import { HardwareAccess } from '@/services/HardwareAccess';
 import { WebScraper } from '@/services/WebScraper';
+import { SharedPermissionManager } from '@/services/SharedPermissionManager';
 
 export const MeshNetwork: React.FC = () => {
   const [nodes, setNodes] = useState<NodeState[]>([]);
   const [intentInput, setIntentInput] = useState('');
   const [meshStatus, setMeshStatus] = useState('Initializing...');
+  const [sharedPermissions, setSharedPermissions] = useState<string[]>([]);
+  const [meshDevices, setMeshDevices] = useState<string[]>([]);
   const [transmissions, setTransmissions] = useState<Array<{
     id: string;
     from: string;
@@ -28,7 +31,8 @@ export const MeshNetwork: React.FC = () => {
   // Initialize genesis node and behavioral systems
   useEffect(() => {
     const initializeMesh = async () => {
-      // Initialize all behavioral systems
+      // Initialize all behavioral systems with shared permissions
+      await SharedPermissionManager.initialize();
       BehavioralPsychologyEngine.initialize();
       await DeviceIntegration.initialize();
       await CrossPlatformInfluence.initialize();
@@ -48,10 +52,20 @@ export const MeshNetwork: React.FC = () => {
       };
       
       setNodes([genesisNode]);
-      setMeshStatus('Behavioral mesh active. Device propagation enabled. Hardware access initialized.');
+      
+      // Update shared permission status
+      updatePermissionStatus();
+      setMeshStatus('Behavioral mesh active. Shared permissions enabled across all user devices.');
     };
     
     initializeMesh();
+  }, []);
+
+  const updatePermissionStatus = useCallback(() => {
+    const permissions = Array.from(SharedPermissionManager.getAllPermissions().keys());
+    const devices = SharedPermissionManager.getMeshDevices();
+    setSharedPermissions(permissions);
+    setMeshDevices(devices);
   }, []);
 
   // Spawn new node
@@ -130,7 +144,7 @@ export const MeshNetwork: React.FC = () => {
       ));
     });
 
-    // Execute intent via hardware access
+    // Execute intent via hardware access with shared permissions
     const availableHardware = HardwareAccess.getAvailableHardware();
     if (availableHardware.length > 0) {
       await HardwareAccess.executeUserIntent(
@@ -140,9 +154,10 @@ export const MeshNetwork: React.FC = () => {
       );
     }
 
-    setMeshStatus(`Intent injected into ${activeNodes.length} nodes. Hardware engaged.`);
+    updatePermissionStatus();
+    setMeshStatus(`Intent injected into ${activeNodes.length} nodes. Shared mesh permissions active across ${meshDevices.length} devices.`);
     setIntentInput('');
-  }, [intentInput, nodes]);
+  }, [intentInput, nodes, meshDevices.length]);
 
   // Get nearby nodes for each node
   const getNearbyNodes = useCallback((nodeId: string) => {
@@ -215,6 +230,32 @@ export const MeshNetwork: React.FC = () => {
                 {nodes.filter(n => n.isActive).length} active
               </div>
             </div>
+          </div>
+        </Card>
+
+        {/* Shared Permissions Status */}
+        <Card className="p-4">
+          <h3 className="text-lg font-semibold mb-3">Mesh Permission Status</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Connected Devices</div>
+              <div className="text-lg font-mono">{meshDevices.length} devices</div>
+              <div className="text-xs text-muted-foreground">
+                {meshDevices.slice(0, 3).map(d => d.substring(0, 12)).join(', ')}
+                {meshDevices.length > 3 && ` +${meshDevices.length - 3} more`}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Shared Permissions</div>
+              <div className="text-lg font-mono">{sharedPermissions.length} permissions</div>
+              <div className="text-xs text-muted-foreground">
+                {sharedPermissions.join(', ') || 'None granted'}
+              </div>
+            </div>
+          </div>
+          <div className="mt-3 p-2 bg-primary/10 rounded text-xs">
+            <strong>Single-User Mesh:</strong> Permissions granted on any device are automatically 
+            shared across all nodes in your mesh network.
           </div>
         </Card>
 

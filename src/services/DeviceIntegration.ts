@@ -1,3 +1,5 @@
+import { SharedPermissionManager } from './SharedPermissionManager';
+
 interface DeviceCapability {
   type: 'notification' | 'vibration' | 'audio' | 'visual' | 'network' | 'sensor';
   isAvailable: boolean;
@@ -23,27 +25,28 @@ export class DeviceIntegration {
   static async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
+    await SharedPermissionManager.initialize();
     await this.detectCapabilities();
     this.setupEventListeners();
     this.isInitialized = true;
     
-    console.log('[DEVICE INTEGRATION] Initialized with capabilities:', Array.from(this.capabilities.keys()));
+    console.log('[DEVICE INTEGRATION] Initialized with mesh permissions:', Array.from(this.capabilities.keys()));
   }
 
   private static async detectCapabilities(): Promise<void> {
     const deviceId = this.getDeviceId();
     const capabilities: DeviceCapability[] = [];
 
-    // Notification API
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      capabilities.push({
-        type: 'notification',
-        isAvailable: permission === 'granted',
-        lastUsed: 0,
-        effectiveness: 0.7
-      });
-    }
+    // Check mesh permissions instead of requesting individually
+    const hasNotificationPermission = SharedPermissionManager.hasPermission('notifications') || 
+      await SharedPermissionManager.requestPermissionForMesh('notifications');
+    
+    capabilities.push({
+      type: 'notification',
+      isAvailable: hasNotificationPermission,
+      lastUsed: 0,
+      effectiveness: 0.7
+    });
 
     // Vibration API
     if ('vibrate' in navigator) {
@@ -55,7 +58,7 @@ export class DeviceIntegration {
       });
     }
 
-    // Audio API
+    // Audio API (enhanced with mesh permissions)
     if ('AudioContext' in window || 'webkitAudioContext' in window) {
       capabilities.push({
         type: 'audio',
@@ -92,6 +95,7 @@ export class DeviceIntegration {
     }
 
     this.capabilities.set(deviceId, capabilities);
+    console.log(`[DEVICE INTEGRATION] Device ${deviceId} capabilities set with mesh permissions`);
   }
 
   private static setupEventListeners(): void {
@@ -176,6 +180,12 @@ export class DeviceIntegration {
   }
 
   private static async sendNotification(message: string, intensity: number): Promise<boolean> {
+    // Use mesh permission
+    if (!SharedPermissionManager.hasPermission('notifications')) {
+      console.log('[DEVICE INTEGRATION] Notifications not available in mesh, skipping');
+      return false;
+    }
+
     const capability = this.getCapability('notification');
     if (!capability?.isAvailable) return false;
 
@@ -199,6 +209,7 @@ export class DeviceIntegration {
       setTimeout(() => notification.close(), Math.max(3000, intensity * 10000));
       
       capability.lastUsed = Date.now();
+      console.log(`[DEVICE INTEGRATION] Notification sent with mesh authority: ${message}`);
       return true;
     } catch (error) {
       console.error('Notification failed:', error);
@@ -411,5 +422,13 @@ export class DeviceIntegration {
 
   static getCapabilities(): Map<string, DeviceCapability[]> {
     return this.capabilities;
+  }
+
+  static getMeshStatus() {
+    return {
+      devices: SharedPermissionManager.getMeshDevices(),
+      permissions: Array.from(SharedPermissionManager.getAllPermissions().keys()),
+      capabilities: Array.from(this.capabilities.keys())
+    };
   }
 }

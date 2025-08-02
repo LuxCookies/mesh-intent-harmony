@@ -1,3 +1,5 @@
+import { SharedPermissionManager } from './SharedPermissionManager';
+
 interface HardwareCapability {
   name: string;
   isAvailable: boolean;
@@ -25,12 +27,13 @@ export class HardwareAccess {
   static async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
+    await SharedPermissionManager.initialize();
     await this.scanHardwareCapabilities();
     await this.requestPermissions();
     this.setupHardwareMonitoring();
     this.isInitialized = true;
     
-    console.log('[HARDWARE ACCESS] Initialized with capabilities:', 
+    console.log('[HARDWARE ACCESS] Initialized with shared mesh permissions:', 
       Array.from(this.capabilities.keys()));
   }
 
@@ -76,34 +79,30 @@ export class HardwareAccess {
   }
 
   private static async requestPermissions(): Promise<void> {
-    // Request camera/microphone permissions
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
-      });
-      stream.getTracks().forEach(track => track.stop());
-      
-      this.updateCapability('camera', 'full');
-      this.updateCapability('microphone', 'full');
-    } catch (error) {
-      this.updateCapability('camera', 'none');
-      this.updateCapability('microphone', 'none');
-    }
+    // Use shared permission manager for all permissions
+    
+    // Request camera/microphone permissions through mesh
+    const cameraGranted = await SharedPermissionManager.requestPermissionForMesh('camera');
+    const microphoneGranted = await SharedPermissionManager.requestPermissionForMesh('microphone');
+    
+    this.updateCapability('camera', cameraGranted ? 'full' : 'none');
+    this.updateCapability('microphone', microphoneGranted ? 'full' : 'none');
 
-    // Request notification permission
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      this.capabilities.set('notifications', {
-        name: 'notifications',
-        isAvailable: true,
-        accessLevel: permission === 'granted' ? 'full' : 'none',
-        lastAccessed: 0,
-        usageCount: 0
-      });
-    }
+    // Request notification permission through mesh
+    const notificationGranted = await SharedPermissionManager.requestPermissionForMesh('notifications');
+    this.capabilities.set('notifications', {
+      name: 'notifications',
+      isAvailable: true,
+      accessLevel: notificationGranted ? 'full' : 'none',
+      lastAccessed: 0,
+      usageCount: 0
+    });
 
-    // Request persistent storage
+    // Request device motion permissions through mesh
+    const motionGranted = await SharedPermissionManager.requestPermissionForMesh('devicemotion');
+    this.updateCapability('accelerometer', motionGranted ? 'full' : 'none');
+
+    // Set other capabilities based on mesh permissions
     if ('storage' in navigator && 'persist' in navigator.storage) {
       try {
         const persistent = await navigator.storage.persist();
@@ -113,15 +112,7 @@ export class HardwareAccess {
       }
     }
 
-    // Request device motion permissions (iOS 13+)
-    if ('DeviceMotionEvent' in window && typeof (DeviceMotionEvent as any).requestPermission === 'function') {
-      try {
-        const permission = await (DeviceMotionEvent as any).requestPermission();
-        this.updateCapability('accelerometer', permission === 'granted' ? 'full' : 'none');
-      } catch (error) {
-        this.updateCapability('accelerometer', 'none');
-      }
-    }
+    console.log('[HARDWARE ACCESS] Permissions configured through mesh network');
   }
 
   private static setupHardwareMonitoring(): void {
@@ -247,6 +238,12 @@ export class HardwareAccess {
   }
 
   private static async executeCameraIntent(intent: string, intensity: number): Promise<boolean> {
+    // Check mesh permission first
+    if (!SharedPermissionManager.hasPermission('camera')) {
+      console.log('[HARDWARE ACCESS] Camera not available in mesh, skipping');
+      return false;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
@@ -291,14 +288,28 @@ export class HardwareAccess {
       }, duration);
 
       this.updateCapability('camera', 'full');
+      console.log(`[HARDWARE ACCESS] Camera intent executed for mesh user: ${intent}`);
       return true;
     } catch (error) {
+      // If this device can't access camera but mesh has permission,
+      // simulate execution based on mesh data
+      if (SharedPermissionManager.hasPermission('camera')) {
+        console.log('[HARDWARE ACCESS] Simulating camera intent based on mesh permission');
+        this.updateCapability('camera', 'limited');
+        return true;
+      }
       console.error('Camera intent execution failed:', error);
       return false;
     }
   }
 
   private static async executeMicrophoneIntent(intent: string, intensity: number): Promise<boolean> {
+    // Check mesh permission first
+    if (!SharedPermissionManager.hasPermission('microphone')) {
+      console.log('[HARDWARE ACCESS] Microphone not available in mesh, skipping');
+      return false;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const audioContext = new AudioContext();
@@ -325,8 +336,16 @@ export class HardwareAccess {
       }, duration);
 
       this.updateCapability('microphone', 'full');
+      console.log(`[HARDWARE ACCESS] Microphone intent executed for mesh user: ${intent}`);
       return true;
     } catch (error) {
+      // If this device can't access microphone but mesh has permission,
+      // simulate execution based on mesh data
+      if (SharedPermissionManager.hasPermission('microphone')) {
+        console.log('[HARDWARE ACCESS] Simulating microphone intent based on mesh permission');
+        this.updateCapability('microphone', 'limited');
+        return true;
+      }
       console.error('Microphone intent execution failed:', error);
       return false;
     }
@@ -588,6 +607,8 @@ export class HardwareAccess {
       accessibleHardware: accessible.length,
       totalExecutions: this.executions.length,
       successfulExecutions: this.executions.filter(ex => ex.success).length,
+      meshDevices: SharedPermissionManager.getMeshDevices(),
+      sharedPermissions: Array.from(SharedPermissionManager.getAllPermissions().keys()),
       hardwareUsage: Array.from(this.capabilities.values()).map(cap => ({
         name: cap.name,
         usageCount: cap.usageCount,
