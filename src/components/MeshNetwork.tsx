@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MeshNode, NodeState } from './MeshNode';
-import { SystemRadarChart } from './RadarChart';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
@@ -508,26 +507,6 @@ export const MeshNetwork: React.FC = () => {
             </div>
           </Card>
         )}
-
-        {/* System Performance Radar */}
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-3">Real-Time System Performance Radar</h3>
-          <SystemRadarChart
-            llmStats={llmStats}
-            infectionStats={infectionStats}
-            agentStatus={agentStatus}
-            networkStats={{
-              activeNodes: nodes.filter(n => n.isActive).length,
-              totalNodes: nodes.length,
-              transmissionRate: transmissions.length / 10 // Normalize recent transmission activity
-            }}
-          />
-          <div className="mt-3 p-2 bg-primary/10 rounded text-xs">
-            <strong>Live Performance Metrics:</strong> Real-time visualization of system capabilities, 
-            AI brain effectiveness, infection spread, agent autonomy, and network activity. 
-            Updates every 2 seconds based on backend communications.
-          </div>
-        </Card>
 
         {/* Shared Permissions Status */}
         <Card className="p-4">
