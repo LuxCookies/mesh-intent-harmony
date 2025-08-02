@@ -10,7 +10,6 @@ export class SharedPermissionManager {
   private static permissions: Map<string, SharedPermission> = new Map();
   private static meshDevices: Set<string> = new Set();
   private static isInitialized = false;
-  private static autoGrantEnabled = false;
 
   static async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -18,56 +17,9 @@ export class SharedPermissionManager {
     await this.loadSharedPermissions();
     this.setupPermissionSync();
     this.setupServiceWorkerSync();
-    this.enableAutoGrant();
     this.isInitialized = true;
 
     console.log('[SHARED PERMISSIONS] Initialized with', this.permissions.size, 'permissions');
-  }
-
-  private static enableAutoGrant(): void {
-    // Once any device grants permissions, enable auto-grant for all discovered devices
-    if (this.permissions.size > 0) {
-      this.autoGrantEnabled = true;
-      console.log('[SHARED PERMISSIONS] Auto-grant enabled - new devices will inherit permissions');
-    }
-
-    // Listen for device discovery events
-    window.addEventListener('device-discovered', ((event: CustomEvent) => {
-      const { device } = event.detail;
-      this.autoGrantPermissionsToDevice(device.id);
-    }) as EventListener);
-  }
-
-  private static async autoGrantPermissionsToDevice(deviceId: string): Promise<void> {
-    if (!this.autoGrantEnabled) return;
-
-    console.log(`[SHARED PERMISSIONS] Auto-granting permissions to discovered device: ${deviceId}`);
-
-    // Grant all existing permissions to the new device
-    for (const [permissionType, permission] of this.permissions) {
-      if (permission.granted) {
-        const newPermission: SharedPermission = {
-          type: permissionType,
-          granted: true,
-          deviceId: deviceId,
-          timestamp: Date.now(),
-          sharedAcrossMesh: true
-        };
-
-        // Create permission entry for new device
-        this.permissions.set(`${permissionType}_${deviceId}`, newPermission);
-        this.meshDevices.add(deviceId);
-
-        // Dispatch permission granted event for the new device
-        window.dispatchEvent(new CustomEvent('permission-auto-granted', {
-          detail: { type: permissionType, deviceId }
-        }));
-      }
-    }
-
-    this.persistPermissions();
-    this.syncToServiceWorker();
-    console.log(`[SHARED PERMISSIONS] Auto-granted ${this.permissions.size} permissions to ${deviceId}`);
   }
 
   private static async loadSharedPermissions(): Promise<void> {
@@ -130,9 +82,6 @@ export class SharedPermissionManager {
     this.permissions.set(type, permission);
     this.meshDevices.add(deviceId);
     
-    // Enable auto-grant after first permission
-    this.autoGrantEnabled = true;
-    
     // Persist to localStorage
     this.persistPermissions();
     
@@ -140,25 +89,25 @@ export class SharedPermissionManager {
     this.sharePermissionAcrossMesh(type, deviceId);
     
     // Sync with service worker
-    this.syncToServiceWorker();
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'update-permissions',
+        data: Object.fromEntries(this.permissions)
+      });
+    }
     
     // Dispatch event for other services
     window.dispatchEvent(new CustomEvent('permission-granted', {
       detail: { type, deviceId }
     }));
 
-    console.log(`[SHARED PERMISSIONS] Granted ${type} for ${deviceId}, auto-grant enabled`);
+    console.log(`[SHARED PERMISSIONS] Granted ${type} for ${deviceId}, shared across mesh and service worker`);
     return true;
   }
 
   static hasPermission(type: string): boolean {
-    // Check if permission exists for any device in mesh
-    for (const [key, permission] of this.permissions) {
-      if (permission.type === type && permission.granted === true) {
-        return true;
-      }
-    }
-    return false;
+    const permission = this.permissions.get(type);
+    return permission?.granted === true;
   }
 
   static getPermissionDevice(type: string): string | null {
@@ -218,15 +167,6 @@ export class SharedPermissionManager {
       if (hasUpdates) {
         console.log('[SHARED PERMISSIONS] Synced permissions from mesh');
       }
-    }
-  }
-
-  private static syncToServiceWorker(): void {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'update-permissions',
-        data: Object.fromEntries(this.permissions)
-      });
     }
   }
 
@@ -317,14 +257,5 @@ export class SharedPermissionManager {
     localStorage.removeItem('mesh_shared_permissions');
     localStorage.removeItem('mesh_devices');
     console.log('[SHARED PERMISSIONS] All permissions revoked across mesh');
-  }
-
-  static isAutoGrantEnabled(): boolean {
-    return this.autoGrantEnabled;
-  }
-
-  static forceEnableAutoGrant(): void {
-    this.autoGrantEnabled = true;
-    console.log('[SHARED PERMISSIONS] Auto-grant force enabled');
   }
 }

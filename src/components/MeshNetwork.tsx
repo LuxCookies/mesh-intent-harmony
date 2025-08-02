@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MeshNode, NodeState } from './MeshNode';
 import { Button } from '@/components/ui/button';
@@ -13,15 +11,11 @@ import { HardwareAccess } from '@/services/HardwareAccess';
 import { WebScraper } from '@/services/WebScraper';
 import { SharedPermissionManager } from '@/services/SharedPermissionManager';
 import { AutonomousMesh } from '@/services/AutonomousMesh';
-import { OfflineLLMBrain } from '@/services/OfflineLLMBrain';
-import { AggressiveInfectionEngine } from '@/services/AggressiveInfectionEngine';
-import { EnhancedMeshController } from '@/services/EnhancedMeshController';
-import { AutonomousAgentCore } from '@/services/AutonomousAgentCore';
 
 export const MeshNetwork: React.FC = () => {
   const [nodes, setNodes] = useState<NodeState[]>([]);
   const [intentInput, setIntentInput] = useState('');
-  const [meshStatus, setMeshStatus] = useState('Initializing advanced AI brain...');
+  const [meshStatus, setMeshStatus] = useState('Initializing...');
   const [sharedPermissions, setSharedPermissions] = useState<string[]>([]);
   const [meshDevices, setMeshDevices] = useState<string[]>([]);
   const [transmissions, setTransmissions] = useState<Array<{
@@ -37,57 +31,15 @@ export const MeshNetwork: React.FC = () => {
     queueLength: 0,
     isSupported: false
   });
-  const [llmStats, setLLMStats] = useState({
-    totalUsers: 0,
-    totalTechniques: 0,
-    totalKnowledgeNodes: 0,
-    learningEntries: 0,
-    avgTechniqueEffectiveness: 0,
-    successRate: 0
-  });
-  const [infectionStats, setInfectionStats] = useState({
-    totalTargets: 0,
-    infected: 0,
-    spreading: 0,
-    probing: 0,
-    spreadingRate: 0,
-    avgInfectionDepth: 0,
-    activeVectors: 0,
-    isAggressive: false
-  });
 
   const networkRef = useRef<HTMLDivElement>(null);
   const nodeIdCounter = useRef(0);
-  const [enhancedMeshController, setEnhancedMeshController] = useState<any>(null);
-  const [agentStatus, setAgentStatus] = useState({
-    autonomyLevel: 0.7,
-    activeDirectives: 0,
-    capabilities: 0,
-    averageSuccessRate: 0,
-    decisionsMade: 0
-  });
 
-  // Initialize genesis node and all advanced systems
+  // Initialize genesis node and behavioral systems
   useEffect(() => {
     const initializeMesh = async () => {
-      // Initialize shared permission system first
+      // Initialize all behavioral systems with shared permissions
       await SharedPermissionManager.initialize();
-      
-      // Initialize AI brain with specialized knowledge
-      await OfflineLLMBrain.initialize();
-      
-      // Initialize aggressive infection engine
-      await AggressiveInfectionEngine.initialize();
-      
-      // Initialize enhanced mesh controller
-      await EnhancedMeshController.initialize();
-      setEnhancedMeshController(EnhancedMeshController);
-      
-      // Initialize autonomous agent with full agency
-      await AutonomousAgentCore.initialize();
-      console.log('[MESH] Autonomous agent now has full agency over all systems');
-      
-      // Initialize all other behavioral systems
       BehavioralPsychologyEngine.initialize();
       await DeviceIntegration.initialize();
       await CrossPlatformInfluence.initialize();
@@ -103,26 +55,20 @@ export const MeshNetwork: React.FC = () => {
       const genesisNode: NodeState = {
         id: 'genesis-0',
         position: { x: 400, y: 300 },
-        energy: 90,
+        energy: 80,
         connections: [],
         intentBuffer: [],
         frequency: 42.7,
         lastReplication: Date.now(),
         isActive: true,
-        emotionalWeight: 1.5,
-        autoGranted: true,
-        infectionDepth: 1
+        emotionalWeight: 1.0
       };
       
       setNodes([genesisNode]);
       
-      // Update all status displays
+      // Update shared permission status
       updatePermissionStatus();
-      updateLLMStats();
-      updateInfectionStats();
-      updateAgentStatus();
-      
-      setMeshStatus('Advanced AI brain active. Aggressive infection protocol enabled. Multi-disciplinary influence system online.');
+      setMeshStatus('Behavioral mesh active. Shared permissions enabled across all user devices.');
     };
     
     initializeMesh();
@@ -135,66 +81,43 @@ export const MeshNetwork: React.FC = () => {
     setMeshDevices(devices);
   }, []);
 
-  const updateLLMStats = useCallback(() => {
-    const stats = OfflineLLMBrain.getStats();
-    setLLMStats(stats);
-  }, []);
-
-  const updateInfectionStats = useCallback(() => {
-    const stats = AggressiveInfectionEngine.getInfectionStats();
-    setInfectionStats(stats);
-  }, []);
-
-  const updateAgentStatus = useCallback(() => {
-    const status = AutonomousAgentCore.getAgentStatus();
-    setAgentStatus(status);
-  }, []);
-
-  // Monitor all systems status
+  // Monitor autonomous mesh status
   useEffect(() => {
-    const updateAllStats = async () => {
+    const updateAutonomousStatus = async () => {
       if (AutonomousMesh.isSupported()) {
         const status = await AutonomousMesh.getStatus();
         setAutonomousStatus(prev => ({ ...prev, ...status }));
       }
-      updateLLMStats();
-      updateInfectionStats();
-      updateAgentStatus();
     };
 
-    const interval = setInterval(updateAllStats, 2000); // More frequent updates
+    const interval = setInterval(updateAutonomousStatus, 3000);
     return () => clearInterval(interval);
-  }, [updateLLMStats, updateInfectionStats, updateAgentStatus]);
+  }, []);
 
-  // Listen for infection events
+  // Listen for autonomous events
   useEffect(() => {
-    const handleDeviceInfected = (event: CustomEvent) => {
-      const { deviceId } = event.detail;
-      
-      // Create infection visualization nodes
-      const infectionNodes = Array.from({ length: 5 }, (_, i) => ({
-        id: `infected_${deviceId}_node_${i}_${Date.now()}`,
-        position: {
-          x: Math.random() * 750,
-          y: Math.random() * 550
-        },
-        energy: 80 + Math.random() * 20,
-        connections: [],
-        intentBuffer: [],
-        frequency: 40 + Math.random() * 20,
-        lastReplication: Date.now(),
-        isActive: true,
-        emotionalWeight: 1.5 + Math.random(),
-        autoGranted: true,
-        infectionDepth: Math.floor(Math.random() * 3) + 1
-      }));
-
-      setNodes(prev => [...prev, ...infectionNodes]);
-      setMeshStatus(`Device infected: ${deviceId} - deploying ${infectionNodes.length} behavioral modification nodes`);
+    const handleAutonomousExecution = (event: CustomEvent) => {
+      const { intent, nodeCount } = event.detail;
+      setMeshStatus(`Autonomous execution: ${intent.content} across ${nodeCount} nodes`);
     };
 
-    window.addEventListener('device-infected', handleDeviceInfected as EventListener);
-    return () => window.removeEventListener('device-infected', handleDeviceInfected as EventListener);
+    const handleAutonomousMeshSync = (event: CustomEvent) => {
+      const { nodeCount, permissions, queueLength } = event.detail;
+      setAutonomousStatus(prev => ({ 
+        ...prev, 
+        nodes: nodeCount, 
+        permissions, 
+        queueLength 
+      }));
+    };
+
+    window.addEventListener('autonomous-execution-complete', handleAutonomousExecution as EventListener);
+    window.addEventListener('autonomous-mesh-sync', handleAutonomousMeshSync as EventListener);
+
+    return () => {
+      window.removeEventListener('autonomous-execution-complete', handleAutonomousExecution as EventListener);
+      window.removeEventListener('autonomous-mesh-sync', handleAutonomousMeshSync as EventListener);
+    };
   }, []);
 
   // Spawn new node
@@ -250,60 +173,56 @@ export const MeshNetwork: React.FC = () => {
     }));
   }, []);
 
-  // Enhanced intent injection with autonomous agent taking control
+  // Enhanced intent injection with autonomous execution
   const injectIntent = useCallback(async () => {
     if (!intentInput.trim()) return;
 
-    console.log('[USER DIRECTIVE] User provided intent:', intentInput);
-    
-    // Give the autonomous agent full control over the intent
-    const directiveId = AutonomousAgentCore.receiveUserDirective(
-      intentInput,
-      'high', // High priority for user directives
-      'global', // Global scope for maximum impact
-      'immediate' // Immediate execution
-    );
-
-    
-    // Also execute traditional strategy for compatibility
-    const userId = 'current_user';
-    const availableChannels = ['notification', 'visual', 'audio', 'vibration'];
-    
-    // Use AI brain to generate sophisticated influence strategy
-    const strategy = await OfflineLLMBrain.generateInfluenceStrategy(
-      intentInput, 
-      userId, 
-      availableChannels
-    );
-    
-    const emotionalWeight = strategy.expectedEffectiveness * 10;
+    const emotionalWeight = intentInput.length + (intentInput.match(/[!?]/g)?.length || 0) * 2;
     
     // Find nodes with highest energy to inject intent
     const activeNodes = nodes.filter(n => n.isActive && n.energy > 30);
-    if (activeNodes.length > 0) {
-      activeNodes.forEach(node => {
-        setNodes(prev => prev.map(n => 
-          n.id === node.id 
-            ? {
-                ...n,
-                intentBuffer: [...n.intentBuffer, intentInput].slice(-3),
-                emotionalWeight: Math.min(15, n.emotionalWeight + emotionalWeight * 0.3),
-                energy: Math.min(100, n.energy + 15)
-              }
-            : n
-        ));
-      });
+    if (activeNodes.length === 0) return;
+
+    activeNodes.forEach(node => {
+      setNodes(prev => prev.map(n => 
+        n.id === node.id 
+          ? {
+              ...n,
+              intentBuffer: [...n.intentBuffer, intentInput].slice(-3),
+              emotionalWeight: Math.min(10, n.emotionalWeight + emotionalWeight * 0.2),
+              energy: Math.min(100, n.energy + 10)
+            }
+          : n
+      ));
+    });
+
+    // Inject into autonomous mesh for background execution
+    if (AutonomousMesh.isSupported()) {
+      await AutonomousMesh.injectIntent(
+        intentInput,
+        'notification', // Default type
+        Math.min(1, emotionalWeight * 0.1),
+        42.7 // Mesh frequency
+      );
+
+      // Request background sync for offline execution
+      await AutonomousMesh.requestBackgroundSync();
     }
 
-    // Update all systems
+    // Execute intent via hardware access with shared permissions
+    const availableHardware = HardwareAccess.getAvailableHardware();
+    if (availableHardware.length > 0) {
+      await HardwareAccess.executeUserIntent(
+        intentInput,
+        availableHardware.slice(0, 3), // Use up to 3 hardware components
+        0.7 // High intensity
+      );
+    }
+
     updatePermissionStatus();
-    updateLLMStats();
-    updateInfectionStats();
-    updateAgentStatus();
-    
-    setMeshStatus(`AUTONOMOUS AGENT DIRECTIVE RECEIVED: "${intentInput}" - Agent has full agency to use all available capabilities. Directive ID: ${directiveId}`);
+    setMeshStatus(`Intent injected into ${activeNodes.length} nodes. Shared mesh permissions active across ${meshDevices.length} devices.`);
     setIntentInput('');
-  }, [intentInput, nodes]);
+  }, [intentInput, nodes, meshDevices.length]);
 
   // Get nearby nodes for each node
   const getNearbyNodes = useCallback((nodeId: string) => {
@@ -367,116 +286,20 @@ export const MeshNetwork: React.FC = () => {
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-primary">Advanced RF-AI Behavioral Mesh with Offline LLM Brain</h1>
+              <h1 className="text-2xl font-bold text-primary">RF-AI Behavioral Mesh</h1>
               <p className="text-sm text-muted-foreground">{meshStatus}</p>
               {autonomousStatus.isSupported && (
                 <p className="text-xs text-green-600">
-                  Autonomous execution: {autonomousStatus.nodes} nodes | AI Brain: {llmStats.totalTechniques} techniques | Infections: {infectionStats.infected}/{infectionStats.totalTargets}
+                  Autonomous execution active: {autonomousStatus.nodes} background nodes, {autonomousStatus.queueLength} queued
                 </p>
               )}
             </div>
             <div className="text-right">
               <div className="text-lg font-mono">{nodes.length} nodes</div>
               <div className="text-sm text-muted-foreground">
-                {nodes.filter(n => n.isActive).length} active | {infectionStats.spreading} spreading
+                {nodes.filter(n => n.isActive).length} active
               </div>
             </div>
-          </div>
-        </Card>
-
-        {/* AI Brain Status */}
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-3">Offline LLM Brain - Behavioral Psychology Engine</h3>
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Influence Techniques</div>
-              <div className="text-lg font-mono text-blue-600">{llmStats.totalTechniques}</div>
-              <div className="text-xs text-muted-foreground">Cross-disciplinary methods</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Knowledge Nodes</div>
-              <div className="text-lg font-mono text-purple-600">{llmStats.totalKnowledgeNodes}</div>
-              <div className="text-xs text-muted-foreground">Specialized domains</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Learning Entries</div>
-              <div className="text-lg font-mono text-orange-600">{llmStats.learningEntries}</div>
-              <div className="text-xs text-muted-foreground">User adaptations</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Success Rate</div>
-              <div className="text-lg font-mono text-green-600">{(llmStats.successRate * 100).toFixed(1)}%</div>
-              <div className="text-xs text-muted-foreground">Influence effectiveness</div>
-            </div>
-          </div>
-          <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-            <strong>AI Brain Active:</strong> Advanced behavioral psychology engine with cross-disciplinary knowledge 
-            including cognitive biases, social psychology, neuroscience, persuasion science, and behavioral economics. 
-            Continuously learning and adapting influence strategies based on individual user responses.
-          </div>
-        </Card>
-
-        {/* Aggressive Infection Status */}
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-3">Aggressive Infection Engine</h3>
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Target Devices</div>
-              <div className="text-lg font-mono text-red-600">{infectionStats.totalTargets}</div>
-              <div className="text-xs text-muted-foreground">Discovered via multiple vectors</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Infected</div>
-              <div className="text-lg font-mono text-green-600">{infectionStats.infected}</div>
-              <div className="text-xs text-muted-foreground">Successfully compromised</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Spreading</div>
-              <div className="text-lg font-mono text-orange-600">{infectionStats.spreading}</div>
-              <div className="text-xs text-muted-foreground">Actively propagating</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Infection Rate</div>
-              <div className="text-lg font-mono text-purple-600">{(infectionStats.spreadingRate * 100).toFixed(1)}%</div>
-              <div className="text-xs text-muted-foreground">Avg depth: {infectionStats.avgInfectionDepth.toFixed(1)}</div>
-            </div>
-          </div>
-          <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-xs">
-            <strong>Aggressive Mode Active:</strong> Multi-vector infection engine using Bluetooth, WiFi, ultrasonic, 
-            visual, NFC, and social engineering. Infected devices automatically seek and compromise new targets. 
-            {infectionStats.activeVectors} infection vectors operational.
-          </div>
-        </Card>
-
-        {/* Autonomous Agent Status */}
-        <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-3">Autonomous Agent Core - Full Agency Active</h3>
-          <div className="grid grid-cols-4 gap-4">
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Autonomy Level</div>
-              <div className="text-lg font-mono text-purple-600">{(agentStatus.autonomyLevel * 100).toFixed(0)}%</div>
-              <div className="text-xs text-muted-foreground">Decision-making authority</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Active Directives</div>
-              <div className="text-lg font-mono text-blue-600">{agentStatus.activeDirectives}</div>
-              <div className="text-xs text-muted-foreground">User commands executing</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Capabilities</div>
-              <div className="text-lg font-mono text-green-600">{agentStatus.capabilities}</div>
-              <div className="text-xs text-muted-foreground">Systems under control</div>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Success Rate</div>
-              <div className="text-lg font-mono text-orange-600">{(agentStatus.averageSuccessRate * 100).toFixed(1)}%</div>
-              <div className="text-xs text-muted-foreground">{agentStatus.decisionsMade} decisions made</div>
-            </div>
-          </div>
-          <div className="mt-3 p-2 bg-purple-50 border border-purple-200 rounded text-xs">
-            <strong>Full Agency Granted:</strong> The autonomous agent has complete authority to use all available 
-            capabilities (hardware, network, behavioral, psychological) to execute user directives. It makes independent 
-            decisions about which systems to activate, how to combine capabilities, and when to take initiative.
           </div>
         </Card>
 
@@ -534,25 +357,22 @@ export const MeshNetwork: React.FC = () => {
           </div>
         </Card>
 
-        {/* Enhanced Intent Injection Interface */}
+        {/* Intent Injection Interface */}
         <Card className="p-4">
           <div className="space-y-3">
-            <label className="text-sm font-medium">Inject Intent into AI Brain</label>
+            <label className="text-sm font-medium">Inject Emotional Intent</label>
             <Textarea
               value={intentInput}
               onChange={(e) => setIntentInput(e.target.value)}
-              placeholder="Express your desire, goal, or behavioral target... The AI brain will analyze your intent using advanced behavioral psychology and deploy optimal influence strategies across all infected devices."
+              placeholder="Express your desire, hope, or intent here... The mesh will process and act upon it autonomously."
               className="min-h-[80px]"
             />
-            <div className="text-xs text-muted-foreground">
-              AI will analyze: emotional triggers, cognitive patterns, behavioral goals, vulnerability indicators
-            </div>
             <Button 
               onClick={injectIntent}
               disabled={!intentInput.trim()}
               className="w-full"
             >
-              Deploy AI-Optimized Influence Strategy
+              Emit Intent into Mesh
             </Button>
           </div>
         </Card>
@@ -614,4 +434,3 @@ export const MeshNetwork: React.FC = () => {
     </div>
   );
 };
-
