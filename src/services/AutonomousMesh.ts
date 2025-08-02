@@ -236,10 +236,29 @@ export class AutonomousMesh {
   }
 
   static async requestBackgroundSync(): Promise<void> {
-    if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
+    if (!('serviceWorker' in navigator)) {
+      console.warn('[AUTONOMOUS MESH] Service Worker not supported');
+      return;
+    }
+
+    try {
       const registration = await navigator.serviceWorker.ready;
-      await registration.sync.register('mesh-execution');
-      console.log('[AUTONOMOUS MESH] Background sync requested');
+      
+      // Check if Background Sync is supported
+      if ('sync' in registration) {
+        await (registration as any).sync.register('mesh-execution');
+        console.log('[AUTONOMOUS MESH] Background sync requested');
+      } else {
+        console.warn('[AUTONOMOUS MESH] Background Sync API not supported');
+        // Fallback: trigger immediate execution
+        if (this.serviceWorker) {
+          this.serviceWorker.postMessage({
+            type: 'fallback-execution'
+          });
+        }
+      }
+    } catch (error) {
+      console.error('[AUTONOMOUS MESH] Background sync registration failed:', error);
     }
   }
 
