@@ -1,3 +1,75 @@
+// Global type definitions for Web APIs
+declare global {
+  interface Navigator {
+    bluetooth?: {
+      requestDevice(options: any): Promise<BluetoothDevice>;
+    };
+    usb?: {
+      requestDevice(options: any): Promise<USBDevice>;
+      getDevices(): Promise<USBDevice[]>;
+    };
+    serial?: {
+      requestPort(): Promise<SerialPort>;
+      getPorts(): Promise<SerialPort[]>;
+    };
+  }
+
+  interface BluetoothDevice {
+    id: string;
+    name?: string;
+    gatt?: BluetoothRemoteGATTServer;
+  }
+
+  interface BluetoothRemoteGATTServer {
+    connected: boolean;
+    connect(): Promise<BluetoothRemoteGATTServer>;
+    disconnect(): void;
+    getPrimaryService(service: string): Promise<any>;
+    getPrimaryServices(): Promise<any[]>;
+  }
+
+  interface USBDevice {
+    deviceClass: number;
+    deviceSubclass: number;
+    deviceProtocol: number;
+    productId: number;
+    vendorId: number;
+    productName?: string;
+    manufacturerName?: string;
+    serialNumber?: string;
+    configuration?: any;
+    open(): Promise<void>;
+    close(): Promise<void>;
+    selectConfiguration(configurationValue: number): Promise<void>;
+    claimInterface(interfaceNumber: number): Promise<void>;
+    releaseInterface(interfaceNumber: number): Promise<void>;
+    transferIn(endpointNumber: number, length: number): Promise<any>;
+    transferOut(endpointNumber: number, data: ArrayBuffer): Promise<any>;
+  }
+
+  interface SerialPort {
+    readable: ReadableStream | null;
+    writable: WritableStream | null;
+    open(options: any): Promise<void>;
+    close(): Promise<void>;
+  }
+
+  interface HIDDevice {
+    vendorId: number;
+    productId: number;
+    productName: string;
+    collections: any[];
+    open(): Promise<void>;
+    close(): Promise<void>;
+    sendReport(reportId: number, data: ArrayBuffer): Promise<void>;
+    receiveReport(): Promise<any>;
+  }
+
+  interface Window {
+    NDEFReader?: any;
+    NDEFWriter?: any;
+  }
+}
 
 interface SilentVector {
   type: 'bluetooth_injection' | 'wifi_mesh' | 'nfc_payload' | 'ultrasonic_carrier' | 'electromagnetic_induction' | 'usb_autorun';
