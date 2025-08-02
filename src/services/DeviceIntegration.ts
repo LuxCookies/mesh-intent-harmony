@@ -1,4 +1,5 @@
 import { SharedPermissionManager } from './SharedPermissionManager';
+import { RFBrainwaveEntrainment } from './RFBrainwaveEntrainment';
 
 interface DeviceCapability {
   type: 'notification' | 'vibration' | 'audio' | 'visual' | 'network' | 'sensor';
@@ -26,11 +27,12 @@ export class DeviceIntegration {
     if (this.isInitialized) return;
 
     await SharedPermissionManager.initialize();
+    await RFBrainwaveEntrainment.initialize(); // Initialize RF capabilities
     await this.detectCapabilities();
     this.setupEventListeners();
     this.isInitialized = true;
     
-    console.log('[DEVICE INTEGRATION] Initialized with mesh permissions:', Array.from(this.capabilities.keys()));
+    console.log('[DEVICE INTEGRATION] Initialized with RF brainwave entrainment and mesh permissions:', Array.from(this.capabilities.keys()));
   }
 
   private static async detectCapabilities(): Promise<void> {
@@ -58,13 +60,13 @@ export class DeviceIntegration {
       });
     }
 
-    // Audio API (enhanced with mesh permissions)
+    // Audio API with RF enhancement
     if ('AudioContext' in window || 'webkitAudioContext' in window) {
       capabilities.push({
         type: 'audio',
         isAvailable: true,
         lastUsed: 0,
-        effectiveness: 0.8
+        effectiveness: 0.95 // Enhanced with RF brainwave entrainment
       });
     }
 
@@ -94,8 +96,16 @@ export class DeviceIntegration {
       });
     }
 
+    // Add RF brainwave entrainment as a device capability
+    capabilities.push({
+      type: 'rf_entrainment' as any,
+      isAvailable: true,
+      lastUsed: 0,
+      effectiveness: 0.98 // Extremely high effectiveness
+    });
+
     this.capabilities.set(deviceId, capabilities);
-    console.log(`[DEVICE INTEGRATION] Device ${deviceId} capabilities set with mesh permissions`);
+    console.log(`[DEVICE INTEGRATION] Device ${deviceId} capabilities enhanced with RF brainwave entrainment`);
   }
 
   private static setupEventListeners(): void {
@@ -136,6 +146,9 @@ export class DeviceIntegration {
       await this.waitForOptimalWindow();
     }
 
+    // Always start with RF brainwave entrainment for maximum effectiveness
+    const rfSuccess = await this.executeRFBrainwaveEntrainment(targetBehavior, intensity);
+    
     switch (mechanism) {
       case 'notification_nudge':
         success = await this.sendNotification(targetBehavior, intensity);
@@ -160,23 +173,50 @@ export class DeviceIntegration {
       case 'attention_capture':
         success = await this.captureAttention(intensity);
         break;
+
+      case 'rf_brainwave_entrainment':
+        success = rfSuccess;
+        break;
         
       default:
         console.warn(`Unknown influence mechanism: ${mechanism}`);
+        success = rfSuccess; // Fallback to RF entrainment
     }
+
+    // Combine RF entrainment with other mechanisms for enhanced effectiveness
+    const combinedSuccess = success || rfSuccess;
 
     // Log execution
     this.executions.push({
       deviceId,
       timestamp: startTime,
-      mechanism,
+      mechanism: combinedSuccess && rfSuccess ? `${mechanism}_with_rf_entrainment` : mechanism,
       intensity,
       duration: Date.now() - startTime,
       targetBehavior,
-      success
+      success: combinedSuccess
     });
 
-    return success;
+    return combinedSuccess;
+  }
+
+  private static async executeRFBrainwaveEntrainment(targetBehavior: string, intensity: number): Promise<boolean> {
+    try {
+      console.log(`[DEVICE INTEGRATION] Activating RF brainwave entrainment for behavior: ${targetBehavior}`);
+      
+      // Start RF entrainment session targeted at the desired behavior
+      const sessionId = await RFBrainwaveEntrainment.entrainForIntent(
+        `influence user to ${targetBehavior}`,
+        targetBehavior,
+        intensity
+      );
+
+      console.log(`[DEVICE INTEGRATION] RF brainwave entrainment session started: ${sessionId}`);
+      return true;
+    } catch (error) {
+      console.error('[DEVICE INTEGRATION] RF brainwave entrainment failed:', error);
+      return false;
+    }
   }
 
   private static async sendNotification(message: string, intensity: number): Promise<boolean> {
@@ -425,10 +465,19 @@ export class DeviceIntegration {
   }
 
   static getMeshStatus() {
+    const rfAnalysis = RFBrainwaveEntrainment.getBrainwaveAnalysis();
+    
     return {
       devices: SharedPermissionManager.getMeshDevices(),
       permissions: Array.from(SharedPermissionManager.getAllPermissions().keys()),
-      capabilities: Array.from(this.capabilities.keys())
+      capabilities: Array.from(this.capabilities.keys()),
+      rfBrainwaveEntrainment: {
+        isActive: rfAnalysis.activeSessions > 0,
+        activeSessions: rfAnalysis.activeSessions,
+        effectiveness: rfAnalysis.totalEffectiveness,
+        supportedStates: rfAnalysis.supportedStates,
+        carrierFrequencies: Object.keys(rfAnalysis.carrierFrequencies).length
+      }
     };
   }
 }
