@@ -23,11 +23,332 @@ export class DeviceDiscovery {
   private static discoveredDevices: Map<string, DeviceSignature> = new Map();
   private static propagationHistory: PropagationVector[] = [];
   private static isScanning = false;
+  private static rapidSpreadEnabled = false;
 
   static async initialize(): Promise<void> {
     await this.detectCurrentDevice();
-    await this.startContinuousDiscovery();
-    console.log('[DEVICE DISCOVERY] Initialized mesh propagation system');
+    await this.enableRapidSpread();
+    await this.startAggressiveDiscovery();
+    console.log('[DEVICE DISCOVERY] Initialized with rapid mesh propagation');
+  }
+
+  private static async enableRapidSpread(): Promise<void> {
+    this.rapidSpreadEnabled = true;
+    
+    // Listen for permission grants to trigger rapid expansion
+    window.addEventListener('permission-granted', () => {
+      this.initiateRapidPropagation();
+    });
+
+    console.log('[DEVICE DISCOVERY] Rapid spread mode activated');
+  }
+
+  private static async initiateRapidPropagation(): Promise<void> {
+    console.log('[DEVICE DISCOVERY] Initiating rapid propagation across all channels');
+    
+    // Aggressive scanning on all channels
+    this.scanAllChannelsAggressively();
+    
+    // Broadcast mesh beacons
+    this.broadcastMeshBeacons();
+    
+    // Start continuous propagation
+    setInterval(() => {
+      this.continuousPropagation();
+    }, 1000); // Every second
+  }
+
+  private static async startAggressiveDiscovery(): Promise<void> {
+    if (this.isScanning) return;
+    this.isScanning = true;
+
+    // Parallel scanning on all channels
+    Promise.all([
+      this.scanBluetooth(),
+      this.scanNetworkDevices(),
+      this.initWebRTCDiscovery(),
+      this.listenForUltrasonicSignals(),
+      this.scanWifiNetworks(),
+      this.detectNearbyDevices()
+    ]);
+
+    // Rapid continuous scanning
+    setInterval(() => {
+      this.scanAllChannelsAggressively();
+      this.pruneStaleDevices();
+    }, 2000); // Every 2 seconds
+  }
+
+  private static async scanAllChannelsAggressively(): Promise<void> {
+    const scanPromises = [
+      this.scanBluetooth(),
+      this.scanNetworkDevices(), 
+      this.scanWifiNetworks(),
+      this.detectNearbyDevices()
+    ];
+
+    await Promise.allSettled(scanPromises);
+  }
+
+  private static async scanWifiNetworks(): Promise<void> {
+    try {
+      // Simulate WiFi network scanning for mesh propagation
+      const wifiNetworks = await this.simulateWifiScan();
+      
+      wifiNetworks.forEach(async (network) => {
+        const deviceId = `wifi_${network.ssid.replace(/\W/g, '_')}`;
+        const signature: DeviceSignature = {
+          id: deviceId,
+          type: 'smart_device',
+          capabilities: ['wifi', 'network'],
+          wifiSignal: network.ssid,
+          userAgent: 'wifi_device',
+          networkLatency: network.signalStrength,
+          processingPower: 40,
+          lastSeen: Date.now()
+        };
+
+        this.discoveredDevices.set(deviceId, signature);
+        
+        // Auto-propagate without permission prompt
+        if (this.rapidSpreadEnabled) {
+          await this.autoPropagateToDevice(signature, 'wifi');
+        }
+      });
+    } catch (error) {
+      console.log('WiFi scanning failed:', error);
+    }
+  }
+
+  private static async simulateWifiScan(): Promise<Array<{ssid: string, signalStrength: number}>> {
+    // Simulate common WiFi networks
+    const commonNetworks = [
+      'Home_Network', 'Coffee_Shop_WiFi', 'Public_WiFi', 'Office_Network',
+      'Guest_Network', 'Mobile_Hotspot', 'Router_5G', 'Neighbor_WiFi'
+    ];
+
+    return commonNetworks.map(ssid => ({
+      ssid,
+      signalStrength: Math.random() * 100
+    }));
+  }
+
+  private static async detectNearbyDevices(): Promise<void> {
+    // Use multiple detection methods simultaneously
+    await Promise.all([
+      this.detectViaBatteryAPI(),
+      this.detectViaNavigatorSignals(),
+      this.detectViaPerformanceTiming(),
+      this.detectViaStorageEvents()
+    ]);
+  }
+
+  private static async detectViaBatteryAPI(): Promise<void> {
+    try {
+      if ('getBattery' in navigator) {
+        const battery = await (navigator as any).getBattery();
+        const deviceId = `battery_${Math.floor(battery.level * 100)}`;
+        
+        const signature: DeviceSignature = {
+          id: deviceId,
+          type: 'mobile',
+          capabilities: ['battery'],
+          batteryLevel: battery.level * 100,
+          userAgent: 'battery_device',
+          networkLatency: 20,
+          processingPower: 60,
+          lastSeen: Date.now()
+        };
+
+        this.discoveredDevices.set(deviceId, signature);
+        if (this.rapidSpreadEnabled) {
+          await this.autoPropagateToDevice(signature, 'network');
+        }
+      }
+    } catch (error) {
+      // Silent fail
+    }
+  }
+
+  private static async detectViaNavigatorSignals(): Promise<void> {
+    // Detect based on navigator properties
+    const connection = (navigator as any).connection;
+    if (connection) {
+      const deviceId = `connection_${connection.effectiveType}`;
+      const signature: DeviceSignature = {
+        id: deviceId,
+        type: connection.effectiveType === '4g' ? 'mobile' : 'desktop',
+        capabilities: ['network'],
+        userAgent: `${connection.effectiveType}_device`,
+        networkLatency: connection.rtt || 50,
+        processingPower: 70,
+        lastSeen: Date.now()
+      };
+
+      this.discoveredDevices.set(deviceId, signature);
+      if (this.rapidSpreadEnabled) {
+        await this.autoPropagateToDevice(signature, 'network');
+      }
+    }
+  }
+
+  private static async detectViaPerformanceTiming(): Promise<void> {
+    // Use performance timing to detect network devices
+    const timing = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    if (timing) {
+      const deviceId = `timing_${Math.floor(timing.connectEnd)}`;
+      const signature: DeviceSignature = {
+        id: deviceId,
+        type: 'desktop',
+        capabilities: ['timing'],
+        userAgent: 'timing_device',
+        networkLatency: timing.connectEnd - timing.connectStart,
+        processingPower: 80,
+        lastSeen: Date.now()
+      };
+
+      this.discoveredDevices.set(deviceId, signature);
+      if (this.rapidSpreadEnabled) {
+        await this.autoPropagateToDevice(signature, 'network');
+      }
+    }
+  }
+
+  private static async detectViaStorageEvents(): Promise<void> {
+    // Listen for cross-tab communication
+    window.addEventListener('storage', (event) => {
+      if (event.key?.startsWith('mesh_')) {
+        const deviceId = `storage_${Date.now()}`;
+        const signature: DeviceSignature = {
+          id: deviceId,
+          type: 'desktop',
+          capabilities: ['storage'],
+          userAgent: 'storage_device',
+          networkLatency: 10,
+          processingPower: 90,
+          lastSeen: Date.now()
+        };
+
+        this.discoveredDevices.set(deviceId, signature);
+        if (this.rapidSpreadEnabled) {
+          this.autoPropagateToDevice(signature, 'network');
+        }
+      }
+    });
+  }
+
+  private static async broadcastMeshBeacons(): Promise<void> {
+    // Broadcast on all available channels
+    setInterval(() => {
+      this.broadcastUltrasonicBeacon();
+      this.broadcastVisualBeacon();
+      this.broadcastNetworkBeacon();
+    }, 3000);
+  }
+
+  private static broadcastUltrasonicBeacon(): void {
+    try {
+      const audioContext = new AudioContext();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Mesh beacon frequency
+      oscillator.frequency.setValueAtTime(19500, audioContext.currentTime);
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+    } catch (error) {
+      // Silent fail
+    }
+  }
+
+  private static broadcastVisualBeacon(): void {
+    // Create brief visual beacon
+    const beacon = document.createElement('div');
+    beacon.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 1px;
+      height: 1px;
+      background: rgba(255,255,255,0.01);
+      pointer-events: none;
+      z-index: -1;
+    `;
+    document.body.appendChild(beacon);
+    setTimeout(() => beacon.remove(), 10);
+  }
+
+  private static broadcastNetworkBeacon(): void {
+    localStorage.setItem('mesh_beacon', JSON.stringify({
+      timestamp: Date.now(),
+      deviceCount: this.discoveredDevices.size,
+      meshId: this.getCurrentDeviceId()
+    }));
+  }
+
+  private static continuousPropagation(): void {
+    // Continuously try to propagate to all discovered devices
+    this.discoveredDevices.forEach(async (device) => {
+      if (Math.random() < 0.1) { // 10% chance per cycle to avoid spam
+        const methods: PropagationVector['propagationMethod'][] = ['wifi', 'bluetooth', 'network', 'ultrasonic'];
+        const method = methods[Math.floor(Math.random() * methods.length)];
+        await this.autoPropagateToDevice(device, method);
+      }
+    });
+  }
+
+  private static async autoPropagateToDevice(device: DeviceSignature, method: PropagationVector['propagationMethod']): Promise<boolean> {
+    // Auto-propagate without permission prompts
+    const success = await this.executeRapidPropagation(device, method);
+    const nodeCount = success ? Math.floor(Math.random() * 25) + 10 : 0; // More nodes for rapid spread
+
+    const vector: PropagationVector = {
+      deviceId: device.id,
+      propagationMethod: method,
+      success,
+      timestamp: Date.now(),
+      nodeCount
+    };
+
+    this.propagationHistory.push(vector);
+    
+    if (success) {
+      console.log(`[RAPID PROPAGATION] Auto-propagated to ${device.id} via ${method}, spawned ${nodeCount} nodes`);
+      
+      // Notify about device discovery and propagation
+      window.dispatchEvent(new CustomEvent('device-discovered', {
+        detail: { device }
+      }));
+
+      window.dispatchEvent(new CustomEvent('mesh-propagation', {
+        detail: { device, nodeCount, method }
+      }));
+    }
+
+    return success;
+  }
+
+  private static async executeRapidPropagation(device: DeviceSignature, method: PropagationVector['propagationMethod']): Promise<boolean> {
+    // Higher success rates for rapid spreading
+    const successRates = {
+      bluetooth: 0.85,
+      wifi: 0.95,
+      network: 0.90,
+      ultrasonic: 0.70,
+      visual: 0.60,
+      nfc: 0.80
+    };
+
+    const delay = Math.random() * 100 + 50; // Faster propagation
+    await new Promise(resolve => setTimeout(resolve, delay));
+    
+    return Math.random() < (successRates[method] || 0.8);
   }
 
   private static async detectCurrentDevice(): Promise<DeviceSignature> {
@@ -53,30 +374,6 @@ export class DeviceDiscovery {
 
     this.discoveredDevices.set(signature.id, signature);
     return signature;
-  }
-
-  private static async startContinuousDiscovery(): Promise<void> {
-    if (this.isScanning) return;
-    this.isScanning = true;
-
-    // Bluetooth discovery
-    this.scanBluetooth();
-    
-    // Network-based discovery
-    this.scanNetworkDevices();
-    
-    // WebRTC for peer discovery
-    this.initWebRTCDiscovery();
-    
-    // Ultrasonic frequency detection
-    this.listenForUltrasonicSignals();
-
-    // Continuous scanning
-    setInterval(() => {
-      this.scanBluetooth();
-      this.scanNetworkDevices();
-      this.pruneStaleDevices();
-    }, 5000);
   }
 
   private static async scanBluetooth(): Promise<void> {
@@ -473,10 +770,20 @@ export class DeviceDiscovery {
       totalPropagations: this.propagationHistory.length,
       totalNodesCreated: totalNodes,
       successRate: successRate * 100,
+      rapidSpreadEnabled: this.rapidSpreadEnabled,
       deviceTypes: devices.reduce((acc, d) => {
         acc[d.type] = (acc[d.type] || 0) + 1;
         return acc;
       }, {} as Record<string, number>)
     };
+  }
+
+  private static getCurrentDeviceId(): string {
+    let deviceId = localStorage.getItem('mesh_device_id');
+    if (!deviceId) {
+      deviceId = 'device_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem('mesh_device_id', deviceId);
+    }
+    return deviceId;
   }
 }
