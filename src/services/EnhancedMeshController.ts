@@ -103,16 +103,37 @@ export class EnhancedMeshController {
   }
 
   private static startMeshOperations(): void {
-    // Periodic mesh maintenance
+    // Periodic mesh maintenance (optimized)
     setInterval(() => {
-      this.maintainMeshNetwork();
-      this.syncWithRemoteNodes();
-    }, 10000); // Every 10 seconds
+      if (this.isPerformanceOptimized) {
+        this.maintainMeshNetwork();
+        this.syncWithRemoteNodes();
+      }
+    }, 15000); // Every 15 seconds (reduced frequency)
 
-    // Behavioral analysis updates
+    // Behavioral analysis updates (throttled)
     setInterval(() => {
-      this.updateBehavioralProfiles();
-    }, 30000); // Every 30 seconds
+      if (this.isPerformanceOptimized) {
+        this.updateBehavioralProfiles();
+      }
+    }, 45000); // Every 45 seconds (reduced frequency)
+  }
+
+  private static isPerformanceOptimized = true;
+
+  static optimizePerformance(): void {
+    const nodeCount = this.nodes.size;
+    
+    // Throttle operations if too many nodes
+    if (nodeCount > 50) {
+      this.isPerformanceOptimized = false;
+      console.log('[PERFORMANCE] Throttling operations due to high node count:', nodeCount);
+      
+      // Re-enable after cleanup
+      setTimeout(() => {
+        this.isPerformanceOptimized = true;
+      }, 10000);
+    }
   }
 
   private static maintainMeshNetwork(): void {

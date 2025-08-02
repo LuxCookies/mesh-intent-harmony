@@ -72,7 +72,7 @@ export class RealCrossPlatformBridge {
         screen.width + 'x' + screen.height,
         new Date().getTimezoneOffset(),
         navigator.hardwareConcurrency,
-        navigator.deviceMemory
+        (navigator as any).deviceMemory || 4
       ].join('|');
       
       deviceId = btoa(fingerprint + navigator_props).substr(0, 16);
