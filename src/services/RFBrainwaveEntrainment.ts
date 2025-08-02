@@ -318,8 +318,8 @@ export class RFBrainwaveEntrainment {
     modFreq: number,
     amplitude: number, 
     duration: number,
-    sweepRange?: [number, number],
-    startTime: number
+    startTime: number,
+    sweepRange?: [number, number]
   ): void {
     const baseFreq = carrier.frequency.value;
     const deviation = baseFreq * 0.1; // 10% frequency deviation
@@ -402,8 +402,8 @@ export class RFBrainwaveEntrainment {
     modFreq: number,
     amplitude: number,
     duration: number,
-    pulsePattern?: number[],
-    startTime: number
+    startTime: number,
+    pulsePattern?: number[]
   ): void {
     // Binary Phase Shift Keying - phase reversal at brainwave rate
     const bitDuration = 1000 / modFreq; // Duration per bit in ms
