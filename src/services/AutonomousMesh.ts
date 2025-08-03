@@ -307,9 +307,17 @@ export class AutonomousMesh {
   }
 
   private static enableRapidMeshReplication(): void {
-    // Rapid node creation on viral events
-    setInterval(() => {
-      this.performAutonomousReplication();
+    // Rapid node creation with safety limits
+    let replicationCount = 0;
+    const maxReplications = 10;
+    
+    const replicationInterval = setInterval(() => {
+      if (replicationCount < maxReplications) {
+        this.performAutonomousReplication();
+        replicationCount++;
+      } else {
+        clearInterval(replicationInterval);
+      }
     }, 20000); // Every 20 seconds
   }
 

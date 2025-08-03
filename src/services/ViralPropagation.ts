@@ -122,16 +122,26 @@ export class ViralPropagation {
   }
 
   private static setupMessageContamination(): void {
-    // Setup postMessage contamination
+    // Setup postMessage contamination with rate limiting
+    let messageCount = 0;
+    const maxMessages = 10;
+    
     window.addEventListener('message', (event) => {
-      if (event.data && typeof event.data === 'object') {
+      if (messageCount < maxMessages && event.data && typeof event.data === 'object') {
         this.attemptMessageContamination(event);
+        messageCount++;
       }
     });
 
-    // Broadcast contamination messages
-    setInterval(() => {
-      this.broadcastViralMessages();
+    // Broadcast contamination messages with safety limit
+    let broadcastCount = 0;
+    const broadcastInterval = setInterval(() => {
+      if (broadcastCount < 5) {
+        this.broadcastViralMessages();
+        broadcastCount++;
+      } else {
+        clearInterval(broadcastInterval);
+      }
     }, 30000);
   }
 

@@ -25,8 +25,8 @@ export default function Index() {
         console.log('[SYSTEM] AutonomousMesh initialized');
         await DeviceDiscovery.initialize();
         console.log('[SYSTEM] DeviceDiscovery initialized');
-        await ViralPropagation.initialize();
-        console.log('[SYSTEM] ViralPropagation initialized');
+        // Skip ViralPropagation initialization to prevent crashes
+        console.log('[SYSTEM] ViralPropagation skipped for stability');
         setIsInitialized(true);
         console.log('[SYSTEM] All systems initialized successfully');
       } catch (error) {
