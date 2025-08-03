@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MeshNode, NodeState } from './MeshNode';
 import { WebMeshDashboard } from './WebMeshDashboard';
+import { FreeMeshDashboard } from './FreeMeshDashboard';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { WebMeshProtocol } from '../services/WebMeshProtocol';
 import { CrossDeviceMesh } from '../services/CrossDeviceMesh';
+import { FreeMeshProtocol } from '../services/FreeMeshProtocol';
 import { BehavioralPsychologyEngine } from '@/services/BehavioralPsychologyEngine';
 import { DeviceIntegration } from '@/services/DeviceIntegration';
 import { CrossPlatformInfluence } from '@/services/CrossPlatformInfluence';
@@ -50,12 +52,16 @@ export const MeshNetwork: React.FC = () => {
       await HardwareAccess.initialize();
       
       try {
-        // Initialize advanced web mesh protocols
+        // Initialize FREE mesh protocols (zero cost!)
+        await FreeMeshProtocol.initialize();
+        console.log('[MESH] FREE protocols initialized successfully');
+        
+        // Initialize advanced web mesh protocols as backup
         await WebMeshProtocol.initialize();
         await CrossDeviceMesh.initialize();
         console.log('[MESH] Advanced web protocols initialized');
       } catch (error) {
-        console.error('[MESH] Web protocols failed:', error);
+        console.error('[MESH] Some protocols failed, continuing with available ones:', error);
       }
       
       // Initialize autonomous mesh
@@ -230,7 +236,10 @@ export const MeshNetwork: React.FC = () => {
         0.7 // High intensity
       );
       
-      // Propagate via advanced web mesh
+      // Propagate via FREE mesh (zero cost!)
+      await FreeMeshProtocol.propagateIntent(intentInput, 0.9);
+      
+      // Propagate via advanced web mesh as backup
       await WebMeshProtocol.propagateIntent(intentInput, 0.8);
       
       // Trigger cross-device propagation
@@ -300,7 +309,10 @@ export const MeshNetwork: React.FC = () => {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-6xl mx-auto space-y-4">
-        {/* Web Mesh Dashboard */}
+        {/* FREE Mesh Dashboard */}
+        <FreeMeshDashboard />
+        
+        {/* Advanced Web Mesh Dashboard */}
         <WebMeshDashboard />
         {/* Status Header */}
         <Card className="p-4">
