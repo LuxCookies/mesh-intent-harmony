@@ -49,9 +49,14 @@ export const MeshNetwork: React.FC = () => {
       await DeviceDiscovery.initialize();
       await HardwareAccess.initialize();
       
-      // Initialize advanced web mesh protocols
-      await WebMeshProtocol.initialize();
-      await CrossDeviceMesh.initialize();
+      try {
+        // Initialize advanced web mesh protocols
+        await WebMeshProtocol.initialize();
+        await CrossDeviceMesh.initialize();
+        console.log('[MESH] Advanced web protocols initialized');
+      } catch (error) {
+        console.error('[MESH] Web protocols failed:', error);
+      }
       
       // Initialize autonomous mesh
       if (AutonomousMesh.isSupported()) {
