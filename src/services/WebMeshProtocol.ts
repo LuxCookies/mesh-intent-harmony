@@ -45,6 +45,11 @@ export class WebMeshProtocol {
         await this.handleSignalingMessage(message);
       };
 
+      signalingWs.onerror = (error) => {
+        console.log('[WEB MESH] Signaling server connection failed, using fallback discovery');
+        this.fallbackDiscovery();
+      };
+
       // Store signaling connection
       this.webSocketConnections.set('signaling', signalingWs);
       
