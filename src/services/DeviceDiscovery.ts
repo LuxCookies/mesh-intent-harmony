@@ -59,14 +59,22 @@ export class DeviceDiscovery {
     // Aggressive scanning on all channels
     this.scanAllChannelsAggressively();
     
-    // Broadcast mesh beacons
-    this.broadcastMeshBeacons();
+    // Broadcast mesh beacons (only create interval once)
+    if (!this.beaconInterval) {
+      this.broadcastMeshBeacons();
+    }
     
-    // Start continuous propagation
-    setInterval(() => {
-      this.continuousPropagation();
-    }, 1000); // Every second
+    // Start continuous propagation (only create interval once)
+    if (!this.propagationInterval) {
+      this.propagationInterval = setInterval(() => {
+        this.continuousPropagation();
+      }, 1000); // Every second
+    }
   }
+
+  private static beaconInterval: NodeJS.Timeout | null = null;
+  private static propagationInterval: NodeJS.Timeout | null = null;
+  private static scanningInterval: NodeJS.Timeout | null = null;
 
   private static async startAggressiveDiscovery(): Promise<void> {
     if (this.isScanning) return;
@@ -82,11 +90,31 @@ export class DeviceDiscovery {
       this.detectNearbyDevices()
     ]);
 
-    // Rapid continuous scanning
-    setInterval(() => {
-      this.scanAllChannelsAggressively();
-      this.pruneStaleDevices();
-    }, 2000); // Every 2 seconds
+    // Rapid continuous scanning (only create interval once)
+    if (!this.scanningInterval) {
+      this.scanningInterval = setInterval(() => {
+        this.scanAllChannelsAggressively();
+        this.pruneStaleDevices();
+      }, 2000); // Every 2 seconds
+    }
+  }
+
+  static cleanup(): void {
+    // Clean up all intervals to prevent memory leaks
+    if (this.beaconInterval) {
+      clearInterval(this.beaconInterval);
+      this.beaconInterval = null;
+    }
+    if (this.propagationInterval) {
+      clearInterval(this.propagationInterval);
+      this.propagationInterval = null;
+    }
+    if (this.scanningInterval) {
+      clearInterval(this.scanningInterval);
+      this.scanningInterval = null;
+    }
+    this.isScanning = false;
+    console.log('[DEVICE DISCOVERY] Cleanup completed');
   }
 
   private static async scanAllChannelsAggressively(): Promise<void> {
@@ -248,12 +276,14 @@ export class DeviceDiscovery {
   }
 
   private static async broadcastMeshBeacons(): Promise<void> {
-    // Broadcast on all available channels
-    setInterval(() => {
-      this.broadcastUltrasonicBeacon();
-      this.broadcastVisualBeacon();
-      this.broadcastNetworkBeacon();
-    }, 3000);
+    // Broadcast on all available channels (only create interval once)
+    if (!this.beaconInterval) {
+      this.beaconInterval = setInterval(() => {
+        this.broadcastUltrasonicBeacon();
+        this.broadcastVisualBeacon();
+        this.broadcastNetworkBeacon();
+      }, 3000);
+    }
   }
 
   private static broadcastUltrasonicBeacon(): void {
@@ -917,16 +947,27 @@ export class DeviceDiscovery {
 
   private static generateCuriosityLinks(): void {
     // Generate links that appear interesting/clickable
-    const linkContainer = document.createElement('div');
-    linkContainer.style.cssText = 'display: none;';
-    linkContainer.innerHTML = `
-      <a href="#" data-mesh-link="discovery">Discover nearby devices</a>
-      <a href="#" data-mesh-link="network">Network mesh status</a>
-    `;
-    document.body.appendChild(linkContainer);
-
-    // Remove after brief time
-    setTimeout(() => linkContainer.remove(), 5000);
+    try {
+      const linkContainer = document.createElement('div');
+      linkContainer.style.cssText = 'display: none;';
+      linkContainer.innerHTML = `
+        <a href="#" data-mesh-link="discovery">Discover nearby devices</a>
+        <a href="#" data-mesh-link="network">Network mesh status</a>
+      `;
+      
+      if (document.body) {
+        document.body.appendChild(linkContainer);
+        
+        // Remove after brief time
+        setTimeout(() => {
+          if (linkContainer.parentNode) {
+            linkContainer.remove();
+          }
+        }, 5000);
+      }
+    } catch (error) {
+      console.error('[DEVICE DISCOVERY] Failed to generate curiosity links:', error);
+    }
   }
 
   private static embedViralElements(): void {

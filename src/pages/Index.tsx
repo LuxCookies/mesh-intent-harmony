@@ -20,12 +20,19 @@ export default function Index() {
   useEffect(() => {
     const initializeSystem = async () => {
       try {
+        console.log('[SYSTEM] Starting initialization...');
         await AutonomousMesh.initialize();
+        console.log('[SYSTEM] AutonomousMesh initialized');
         await DeviceDiscovery.initialize();
+        console.log('[SYSTEM] DeviceDiscovery initialized');
         await ViralPropagation.initialize();
+        console.log('[SYSTEM] ViralPropagation initialized');
         setIsInitialized(true);
+        console.log('[SYSTEM] All systems initialized successfully');
       } catch (error) {
-        console.error('Failed to initialize mesh system:', error);
+        console.error('[SYSTEM] Failed to initialize mesh system:', error);
+        console.error('[SYSTEM] Error details:', error instanceof Error ? error.message : 'Unknown error');
+        console.error('[SYSTEM] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
       }
     };
 
@@ -34,13 +41,22 @@ export default function Index() {
     // Real-time stats updates
     const statsInterval = setInterval(async () => {
       if (isInitialized) {
-        const mesh = await AutonomousMesh.getStatus();
-        const viral = ViralPropagation.getContaminationStats();
-        const network = DeviceDiscovery.getNetworkStats();
-        const contagion = AutonomousMesh.getContagionStats();
-        
-        setMeshStats({ ...mesh, ...network, ...contagion });
-        setViralStats(viral);
+        try {
+          console.log('[STATS] Updating stats...');
+          const mesh = await AutonomousMesh.getStatus();
+          console.log('[STATS] Mesh status:', mesh);
+          const viral = ViralPropagation.getContaminationStats();
+          console.log('[STATS] Viral stats:', viral);
+          const network = DeviceDiscovery.getNetworkStats();
+          console.log('[STATS] Network stats:', network);
+          const contagion = AutonomousMesh.getContagionStats();
+          console.log('[STATS] Contagion stats:', contagion);
+          
+          setMeshStats({ ...mesh, ...network, ...contagion });
+          setViralStats(viral);
+        } catch (error) {
+          console.error('[STATS] Error updating stats:', error);
+        }
       }
     }, 1500);
 
@@ -100,17 +116,28 @@ export default function Index() {
     const rfInterval = setInterval(handleRfEmission, 2500);
     
     return () => {
+      console.log('[SYSTEM] Cleaning up intervals...');
       clearInterval(statsInterval);
       clearInterval(rfInterval);
       window.removeEventListener('mesh-propagation', handleMeshPropagation);
       window.removeEventListener('viral-spread', handleViralSpread);
+      
+      // Clean up device discovery intervals
+      DeviceDiscovery.cleanup();
+      console.log('[SYSTEM] Cleanup completed');
     };
   }, [isInitialized]);
 
   const handleInjectIntent = async () => {
     if (intentText.trim()) {
-      await AutonomousMesh.injectIntent(intentText, 'notification', 0.7);
-      setIntentText('');
+      try {
+        console.log('[INTENT] Injecting intent:', intentText);
+        await AutonomousMesh.injectIntent(intentText, 'notification', 0.7);
+        setIntentText('');
+        console.log('[INTENT] Intent injection successful');
+      } catch (error) {
+        console.error('[INTENT] Intent injection failed:', error);
+      }
     }
   };
 
