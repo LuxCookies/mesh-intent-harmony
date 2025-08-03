@@ -1,21 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MeshNode, NodeState } from './MeshNode';
-import { WebMeshDashboard } from './WebMeshDashboard';
-import { FreeMeshDashboard } from './FreeMeshDashboard';
+import { UnifiedMeshControl } from './UnifiedMeshControl';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
-import { WebMeshProtocol } from '../services/WebMeshProtocol';
-import { CrossDeviceMesh } from '../services/CrossDeviceMesh';
-import { FreeMeshProtocol } from '../services/FreeMeshProtocol';
-import { BehavioralPsychologyEngine } from '@/services/BehavioralPsychologyEngine';
-import { DeviceIntegration } from '@/services/DeviceIntegration';
-import { CrossPlatformInfluence } from '@/services/CrossPlatformInfluence';
-import { DeviceDiscovery } from '@/services/DeviceDiscovery';
-import { HardwareAccess } from '@/services/HardwareAccess';
-import { WebScraper } from '@/services/WebScraper';
-import { SharedPermissionManager } from '@/services/SharedPermissionManager';
-import { AutonomousMesh } from '@/services/AutonomousMesh';
+import { UnifiedMeshEngine } from '../services/UnifiedMeshEngine';
 
 export const MeshNetwork: React.FC = () => {
   const [nodes, setNodes] = useState<NodeState[]>([]);
@@ -40,101 +29,76 @@ export const MeshNetwork: React.FC = () => {
   const networkRef = useRef<HTMLDivElement>(null);
   const nodeIdCounter = useRef(0);
 
-  // Initialize genesis node and behavioral systems
+  // Initialize unified mesh system
   useEffect(() => {
     const initializeMesh = async () => {
-      // Initialize all behavioral systems with shared permissions
-      await SharedPermissionManager.initialize();
-      BehavioralPsychologyEngine.initialize();
-      await DeviceIntegration.initialize();
-      await CrossPlatformInfluence.initialize();
-      await DeviceDiscovery.initialize();
-      await HardwareAccess.initialize();
-      
       try {
-        // Initialize FREE mesh protocols (zero cost!)
-        await FreeMeshProtocol.initialize();
-        console.log('[MESH] FREE protocols initialized successfully');
+        await UnifiedMeshEngine.initialize();
+        console.log('[MESH] Unified mesh engine initialized successfully');
         
-        // Initialize advanced web mesh protocols as backup
-        await WebMeshProtocol.initialize();
-        await CrossDeviceMesh.initialize();
-        console.log('[MESH] Advanced web protocols initialized');
+        const genesisNode: NodeState = {
+          id: 'genesis-0',
+          position: { x: 400, y: 300 },
+          energy: 100,
+          connections: [],
+          intentBuffer: [],
+          frequency: 42.7,
+          lastReplication: Date.now(),
+          isActive: true,
+          emotionalWeight: 1.0
+        };
+        
+        setNodes([genesisNode]);
+        setMeshStatus('Unified mesh engine active. All propagation channels operational.');
       } catch (error) {
-        console.error('[MESH] Some protocols failed, continuing with available ones:', error);
+        console.error('[MESH] Unified mesh initialization failed:', error);
+        setMeshStatus('Mesh initialization failed. Retrying...');
       }
-      
-      // Initialize autonomous mesh
-      if (AutonomousMesh.isSupported()) {
-        await AutonomousMesh.initialize();
-        setAutonomousStatus(prev => ({ ...prev, isSupported: true }));
-      }
-      
-      const genesisNode: NodeState = {
-        id: 'genesis-0',
-        position: { x: 400, y: 300 },
-        energy: 80,
-        connections: [],
-        intentBuffer: [],
-        frequency: 42.7,
-        lastReplication: Date.now(),
-        isActive: true,
-        emotionalWeight: 1.0
-      };
-      
-      setNodes([genesisNode]);
-      
-      // Update shared permission status
-      updatePermissionStatus();
-      setMeshStatus('Behavioral mesh active. Shared permissions enabled across all user devices.');
     };
     
     initializeMesh();
   }, []);
 
-  const updatePermissionStatus = useCallback(() => {
-    const permissions = Array.from(SharedPermissionManager.getAllPermissions().keys());
-    const devices = SharedPermissionManager.getMeshDevices();
-    setSharedPermissions(permissions);
-    setMeshDevices(devices);
+  const updateMeshStatus = useCallback(() => {
+    const stats = UnifiedMeshEngine.getStats();
+    setSharedPermissions(stats.propagationMethods);
+    setMeshDevices([`Device count: ${stats.connectedDevices}`]);
   }, []);
 
-  // Monitor autonomous mesh status
+  // Monitor unified mesh status
   useEffect(() => {
-    const updateAutonomousStatus = async () => {
-      if (AutonomousMesh.isSupported()) {
-        const status = await AutonomousMesh.getStatus();
-        setAutonomousStatus(prev => ({ ...prev, ...status }));
-      }
+    const updateStats = () => {
+      const stats = UnifiedMeshEngine.getStats();
+      setAutonomousStatus({
+        nodes: stats.activeNodes,
+        permissions: stats.propagationMethods,
+        queueLength: stats.totalIntents,
+        isSupported: true
+      });
     };
 
-    const interval = setInterval(updateAutonomousStatus, 3000);
+    const interval = setInterval(updateStats, 3000);
     return () => clearInterval(interval);
   }, []);
 
-  // Listen for autonomous events
+  // Listen for unified mesh events
   useEffect(() => {
-    const handleAutonomousExecution = (event: CustomEvent) => {
-      const { intent, nodeCount } = event.detail;
-      setMeshStatus(`Autonomous execution: ${intent.content} across ${nodeCount} nodes`);
+    const handleMeshEvent = (event: CustomEvent) => {
+      const { content, nodeCount } = event.detail;
+      setMeshStatus(`Unified mesh: ${content || 'Event triggered'} ${nodeCount ? `across ${nodeCount} nodes` : ''}`);
     };
 
-    const handleAutonomousMeshSync = (event: CustomEvent) => {
-      const { nodeCount, permissions, queueLength } = event.detail;
-      setAutonomousStatus(prev => ({ 
-        ...prev, 
-        nodes: nodeCount, 
-        permissions, 
-        queueLength 
-      }));
+    const handleReplication = (event: CustomEvent) => {
+      const { nodeCount, deviceId } = event.detail;
+      setMeshStatus(`Replication: +${nodeCount} nodes on ${deviceId.slice(-8)}`);
     };
 
-    window.addEventListener('autonomous-execution-complete', handleAutonomousExecution as EventListener);
-    window.addEventListener('autonomous-mesh-sync', handleAutonomousMeshSync as EventListener);
+    window.addEventListener('unified-mesh-intent-received', handleMeshEvent as EventListener);
+    window.addEventListener('unified-mesh-replication', handleReplication as EventListener);
 
     return () => {
-      window.removeEventListener('autonomous-execution-complete', handleAutonomousExecution as EventListener);
-      window.removeEventListener('autonomous-mesh-sync', handleAutonomousMeshSync as EventListener);
+      window.removeEventListener('unified-mesh-intent-received', handleMeshEvent as EventListener);
+      window.removeEventListener('unified-mesh-replication', handleReplication as EventListener);
     };
   }, []);
 
@@ -191,16 +155,18 @@ export const MeshNetwork: React.FC = () => {
     }));
   }, []);
 
-  // Enhanced intent injection with autonomous execution
+  // Unified intent injection
   const injectIntent = useCallback(async () => {
     if (!intentInput.trim()) return;
 
     const emotionalWeight = intentInput.length + (intentInput.match(/[!?]/g)?.length || 0) * 2;
+    const intensity = Math.min(1, emotionalWeight * 0.1);
     
     // Find nodes with highest energy to inject intent
     const activeNodes = nodes.filter(n => n.isActive && n.energy > 30);
     if (activeNodes.length === 0) return;
 
+    // Update visual nodes
     activeNodes.forEach(node => {
       setNodes(prev => prev.map(n => 
         n.id === node.id 
@@ -214,42 +180,13 @@ export const MeshNetwork: React.FC = () => {
       ));
     });
 
-    // Inject into autonomous mesh for background execution
-    if (AutonomousMesh.isSupported()) {
-      await AutonomousMesh.injectIntent(
-        intentInput,
-        'notification', // Default type
-        Math.min(1, emotionalWeight * 0.1),
-        42.7 // Mesh frequency
-      );
+    // Inject into unified mesh engine
+    await UnifiedMeshEngine.propagateIntent(intentInput, intensity, 'notification');
 
-      // Request background sync for offline execution
-      await AutonomousMesh.requestBackgroundSync();
-    }
-
-    // Execute intent via hardware access with shared permissions
-    const availableHardware = HardwareAccess.getAvailableHardware();
-    if (availableHardware.length > 0) {
-      await HardwareAccess.executeUserIntent(
-        intentInput,
-        availableHardware.slice(0, 3), // Use up to 3 hardware components
-        0.7 // High intensity
-      );
-      
-      // Propagate via FREE mesh (zero cost!)
-      await FreeMeshProtocol.propagateIntent(intentInput, 0.9);
-      
-      // Propagate via advanced web mesh as backup
-      await WebMeshProtocol.propagateIntent(intentInput, 0.8);
-      
-      // Trigger cross-device propagation
-      await CrossDeviceMesh.propagateToAllDevices(intentInput, 0.8);
-    }
-
-    updatePermissionStatus();
-    setMeshStatus(`Intent injected into ${activeNodes.length} nodes. Shared mesh permissions active across ${meshDevices.length} devices.`);
+    updateMeshStatus();
+    setMeshStatus(`Intent propagated via unified mesh: "${intentInput}"`);
     setIntentInput('');
-  }, [intentInput, nodes, meshDevices.length]);
+  }, [intentInput, nodes]);
 
   // Get nearby nodes for each node
   const getNearbyNodes = useCallback((nodeId: string) => {
@@ -266,33 +203,32 @@ export const MeshNetwork: React.FC = () => {
     });
   }, [nodes]);
 
-  // Handle device propagation
+  // Handle unified mesh propagation
   useEffect(() => {
     const handlePropagation = (event: CustomEvent) => {
-      const { device, nodeCount, method } = event.detail;
+      const { nodeCount, deviceId } = event.detail;
       
-      // Create new nodes based on device propagation
-      const newNodes = Array.from({ length: nodeCount }, (_, i) => ({
-        id: `${device.id}_node_${i}_${Date.now()}`,
+      // Create new nodes based on replication
+      const newNodes = Array.from({ length: nodeCount || 1 }, (_, i) => ({
+        id: `unified_${deviceId?.slice(-4)}_${i}_${Date.now()}`,
         position: {
           x: Math.random() * 750,
           y: Math.random() * 550
         },
-        energy: 60 + Math.random() * 40,
+        energy: 70 + Math.random() * 30,
         connections: [],
         intentBuffer: [],
-        frequency: 40 + Math.random() * 20,
+        frequency: 42.7 + Math.random() * 5,
         lastReplication: Date.now(),
         isActive: true,
         emotionalWeight: Math.random() * 2
       }));
 
       setNodes(prev => [...prev, ...newNodes]);
-      setMeshStatus(`Propagated to ${device.id}: +${nodeCount} nodes via ${method}`);
     };
 
-    window.addEventListener('mesh-propagation', handlePropagation as EventListener);
-    return () => window.removeEventListener('mesh-propagation', handlePropagation as EventListener);
+    window.addEventListener('unified-mesh-replication', handlePropagation as EventListener);
+    return () => window.removeEventListener('unified-mesh-replication', handlePropagation as EventListener);
   }, []);
 
   // Auto-remove old transmissions
@@ -309,11 +245,8 @@ export const MeshNetwork: React.FC = () => {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-6xl mx-auto space-y-4">
-        {/* FREE Mesh Dashboard */}
-        <FreeMeshDashboard />
-        
-        {/* Advanced Web Mesh Dashboard */}
-        <WebMeshDashboard />
+        {/* Unified Mesh Control */}
+        <UnifiedMeshControl />
         {/* Status Header */}
         <Card className="p-4">
           <div className="flex items-center justify-between">
@@ -363,29 +296,29 @@ export const MeshNetwork: React.FC = () => {
           </Card>
         )}
 
-        {/* Shared Permissions Status */}
+        {/* Unified Propagation Status */}
         <Card className="p-4">
-          <h3 className="text-lg font-semibold mb-3">Mesh Permission Status</h3>
+          <h3 className="text-lg font-semibold mb-3">Unified Propagation Status</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Connected Devices</div>
-              <div className="text-lg font-mono">{meshDevices.length} devices</div>
+              <div className="text-sm font-medium text-muted-foreground">Propagation Methods</div>
+              <div className="text-lg font-mono">{sharedPermissions.length} channels</div>
               <div className="text-xs text-muted-foreground">
-                {meshDevices.slice(0, 3).map(d => d.substring(0, 12)).join(', ')}
-                {meshDevices.length > 3 && ` +${meshDevices.length - 3} more`}
+                {sharedPermissions.slice(0, 3).join(', ')}
+                {sharedPermissions.length > 3 && ` +${sharedPermissions.length - 3} more`}
               </div>
             </div>
             <div>
-              <div className="text-sm font-medium text-muted-foreground">Shared Permissions</div>
-              <div className="text-lg font-mono">{sharedPermissions.length} permissions</div>
+              <div className="text-sm font-medium text-muted-foreground">Mesh Coverage</div>
+              <div className="text-lg font-mono">{meshDevices.length} info</div>
               <div className="text-xs text-muted-foreground">
-                {sharedPermissions.join(', ') || 'None granted'}
+                {meshDevices.join(', ') || 'No data'}
               </div>
             </div>
           </div>
           <div className="mt-3 p-2 bg-primary/10 rounded text-xs">
-            <strong>Single-User Mesh:</strong> Permissions granted on any device are automatically 
-            shared across all nodes in your mesh network.
+            <strong>Unified Mesh:</strong> Single engine coordinates all propagation channels 
+            for maximum viral spread and autonomous execution.
           </div>
         </Card>
 

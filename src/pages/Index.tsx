@@ -4,11 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AutonomousMesh } from '@/services/AutonomousMesh';
-import { DeviceDiscovery } from '@/services/DeviceDiscovery';
-import { RealDeviceDiscovery } from '@/services/RealDeviceDiscovery';
-import { RealMeshPropagation } from '@/services/RealMeshPropagation';
-import { ViralPropagation } from '@/services/ViralPropagation';
+import { UnifiedMeshEngine } from '@/services/UnifiedMeshEngine';
 
 export default function Index() {
   const [intentText, setIntentText] = useState('');
@@ -24,50 +20,34 @@ export default function Index() {
   useEffect(() => {
     const initializeSystem = async () => {
       try {
-        console.log('[SYSTEM] Starting initialization...');
-        await AutonomousMesh.initialize();
-        console.log('[SYSTEM] AutonomousMesh initialized');
-        await DeviceDiscovery.initialize();
-        console.log('[SYSTEM] DeviceDiscovery initialized');
-        await RealDeviceDiscovery.initialize();
-        console.log('[SYSTEM] RealDeviceDiscovery initialized');
-        await RealMeshPropagation.initialize();
-        console.log('[SYSTEM] RealMeshPropagation initialized');
-        await ViralPropagation.initialize();
-        console.log('[SYSTEM] ViralPropagation initialized');
+        console.log('[SYSTEM] Starting unified mesh initialization...');
+        await UnifiedMeshEngine.initialize();
+        console.log('[SYSTEM] Unified mesh engine initialized');
         setIsInitialized(true);
-        console.log('[SYSTEM] All systems initialized successfully');
+        console.log('[SYSTEM] System ready');
       } catch (error) {
-        console.error('[SYSTEM] Failed to initialize mesh system:', error);
-        console.error('[SYSTEM] Error details:', error instanceof Error ? error.message : 'Unknown error');
-        console.error('[SYSTEM] Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+        console.error('[SYSTEM] Failed to initialize unified mesh:', error);
       }
     };
 
     initializeSystem();
 
     // Real-time stats updates
-    const statsInterval = setInterval(async () => {
+    const statsInterval = setInterval(() => {
       if (isInitialized) {
         try {
-          console.log('[STATS] Updating stats...');
-          const mesh = await AutonomousMesh.getStatus();
-          console.log('[STATS] Mesh status:', mesh);
-          const viral = ViralPropagation.getContaminationStats();
-          console.log('[STATS] Viral stats:', viral);
-          const network = DeviceDiscovery.getNetworkStats();
-          console.log('[STATS] Network stats:', network);
-          const realMeshStats = RealMeshPropagation.getMeshStats();
-          console.log('[STATS] Real mesh stats:', realMeshStats);
-          const contagion = AutonomousMesh.getContagionStats();
-          console.log('[STATS] Contagion stats:', contagion);
-          
-          setMeshStats({ ...mesh, ...network, ...contagion, ...realMeshStats });
-          setViralStats(viral);
-          setRealDevices(RealDeviceDiscovery.getDiscoveredDevices());
-          setMeshConnections(RealMeshPropagation.getConnectionDetails());
+          const unifiedStats = UnifiedMeshEngine.getStats();
+          setMeshStats(unifiedStats);
+          setViralStats({
+            activeVectors: unifiedStats.viralVectors,
+            spreadEvents: unifiedStats.totalIntents,
+            averageInfectivity: unifiedStats.contagionRate,
+            averageStealth: unifiedStats.meshCoverage
+          });
+          setRealDevices([]);
+          setMeshConnections([]);
         } catch (error) {
-          console.error('[STATS] Error updating stats:', error);
+          console.error('[STATS] Error updating unified stats:', error);
         }
       }
     }, 1500);
@@ -150,10 +130,8 @@ export default function Index() {
       window.removeEventListener('viral-spread', handleViralSpread);
       window.removeEventListener('real-device-found', handleRealDeviceFound);
       
-      // Clean up device discovery intervals
-      DeviceDiscovery.cleanup();
-      RealDeviceDiscovery.cleanup();
-      RealMeshPropagation.cleanup();
+      // Clean up unified mesh
+      UnifiedMeshEngine.cleanup();
       console.log('[SYSTEM] Cleanup completed');
     };
   }, [isInitialized]);
@@ -161,16 +139,15 @@ export default function Index() {
   const handleInjectIntent = async () => {
     if (intentText.trim()) {
       try {
-        console.log('[INTENT] Injecting intent:', intentText);
+        console.log('[INTENT] Injecting intent into unified mesh:', intentText);
         
-        // Inject into both systems for maximum propagation
-        await AutonomousMesh.injectIntent(intentText, 'notification', 0.7);
-        await RealMeshPropagation.propagateIntent(intentText, 0.7);
+        const intensity = Math.min(1, intentText.length / 50);
+        await UnifiedMeshEngine.propagateIntent(intentText, intensity, 'notification');
         
         setIntentText('');
-        console.log('[INTENT] Intent injection successful across all systems');
+        console.log('[INTENT] Intent injection successful via unified mesh');
       } catch (error) {
-        console.error('[INTENT] Intent injection failed:', error);
+        console.error('[INTENT] Unified intent injection failed:', error);
       }
     }
   };
@@ -190,20 +167,20 @@ export default function Index() {
             <Badge variant={isInitialized ? "default" : "secondary"} className="animate-pulse">
               {isInitialized ? "ACTIVE" : "INITIALIZING"}
             </Badge>
-            <Badge variant={meshStats.meshNodes > 0 ? "default" : "outline"}>
-              {meshStats.meshNodes || 0} MESH NODES
+            <Badge variant={meshStats.activeNodes > 0 ? "default" : "outline"}>
+              {meshStats.activeNodes || 0} ACTIVE NODES
             </Badge>
-            <Badge variant={realDevices.length > 0 ? "default" : "outline"}>
-              {realDevices.length} REAL DEVICES
+            <Badge variant={meshStats.connectedDevices > 0 ? "default" : "outline"}>
+              {meshStats.connectedDevices || 0} CONNECTED DEVICES
             </Badge>
-            <Badge variant={meshConnections.length > 0 ? "default" : "outline"}>
-              {meshConnections.length} ACTIVE CONNECTIONS
+            <Badge variant={meshStats.viralVectors > 0 ? "default" : "outline"}>
+              {meshStats.viralVectors || 0} PROPAGATION CHANNELS
             </Badge>
             <Badge variant={viralStats.activeVectors > 0 ? "destructive" : "outline"}>
               {viralStats.activeVectors || 0} VIRAL VECTORS
             </Badge>
-            <Badge variant={meshStats.isHyperContagious ? "destructive" : "outline"}>
-              {meshStats.isHyperContagious ? "HYPER-CONTAGIOUS" : "SPREADING"}
+            <Badge variant={meshStats.contagionRate > 0.5 ? "destructive" : "outline"}>
+              {meshStats.contagionRate > 0.5 ? "HYPER-CONTAGIOUS" : "SPREADING"}
             </Badge>
           </div>
         </div>
@@ -216,9 +193,9 @@ export default function Index() {
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
               </div>
-              Live Real Device Mesh Network
+              Unified Viral Mesh Network
               <Badge variant="outline" className="ml-auto">
-                {meshStats.discoveredDevices || 0} Simulated + {realDevices.length} Real Devices
+                {meshStats.activeNodes || 0} Nodes • {meshStats.viralVectors || 0} Channels
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -348,19 +325,19 @@ export default function Index() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card className="text-center">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-primary">{meshStats.discoveredDevices || 0}</div>
-              <div className="text-xs text-muted-foreground">Discovered Devices</div>
+              <div className="text-2xl font-bold text-primary">{meshStats.activeNodes || 0}</div>
+              <div className="text-xs text-muted-foreground">Active Nodes</div>
               <div className="text-xs text-muted-foreground font-mono">
-                Success: {((meshStats.successRate || 0)).toFixed(0)}%
+                Connected: {meshStats.connectedDevices || 0}
               </div>
             </CardContent>
           </Card>
           <Card className="text-center">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-green-600">{meshStats.totalPropagations || 0}</div>
-              <div className="text-xs text-muted-foreground">Total Propagations</div>
+              <div className="text-2xl font-bold text-green-600">{meshStats.totalIntents || 0}</div>
+              <div className="text-xs text-muted-foreground">Total Intents</div>
               <div className="text-xs text-muted-foreground font-mono">
-                Nodes: {meshStats.totalNodesCreated || 0}
+                Vectors: {meshStats.viralVectors || 0}
               </div>
             </CardContent>
           </Card>
@@ -386,10 +363,12 @@ export default function Index() {
           </Card>
           <Card className="text-center">
             <CardContent className="p-4">
-              <div className="text-2xl font-bold text-purple-600">{meshStats.meshNodes || 0}</div>
-              <div className="text-xs text-muted-foreground">Mesh Nodes</div>
+              <div className="text-2xl font-bold text-purple-600">
+                {((meshStats.meshCoverage || 0) * 100).toFixed(0)}%
+              </div>
+              <div className="text-xs text-muted-foreground">Mesh Coverage</div>
               <div className="text-xs text-muted-foreground font-mono">
-                Queue: {meshStats.queueLength || 0}
+                Unified Engine
               </div>
             </CardContent>
           </Card>
