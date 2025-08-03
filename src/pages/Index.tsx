@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AutonomousMesh } from '@/services/AutonomousMesh';
 import { DeviceDiscovery } from '@/services/DeviceDiscovery';
+import { RealDeviceDiscovery } from '@/services/RealDeviceDiscovery';
+import { RealMeshPropagation } from '@/services/RealMeshPropagation';
 import { ViralPropagation } from '@/services/ViralPropagation';
 
 export default function Index() {
@@ -16,6 +18,8 @@ export default function Index() {
   const [networkActivity, setNetworkActivity] = useState<any[]>([]);
   const [rfSignals, setRfSignals] = useState<any[]>([]);
   const [emWaves, setEmWaves] = useState<any[]>([]);
+  const [realDevices, setRealDevices] = useState<any[]>([]);
+  const [meshConnections, setMeshConnections] = useState<any[]>([]);
 
   useEffect(() => {
     const initializeSystem = async () => {
@@ -25,6 +29,10 @@ export default function Index() {
         console.log('[SYSTEM] AutonomousMesh initialized');
         await DeviceDiscovery.initialize();
         console.log('[SYSTEM] DeviceDiscovery initialized');
+        await RealDeviceDiscovery.initialize();
+        console.log('[SYSTEM] RealDeviceDiscovery initialized');
+        await RealMeshPropagation.initialize();
+        console.log('[SYSTEM] RealMeshPropagation initialized');
         await ViralPropagation.initialize();
         console.log('[SYSTEM] ViralPropagation initialized');
         setIsInitialized(true);
@@ -49,11 +57,15 @@ export default function Index() {
           console.log('[STATS] Viral stats:', viral);
           const network = DeviceDiscovery.getNetworkStats();
           console.log('[STATS] Network stats:', network);
+          const realMeshStats = RealMeshPropagation.getMeshStats();
+          console.log('[STATS] Real mesh stats:', realMeshStats);
           const contagion = AutonomousMesh.getContagionStats();
           console.log('[STATS] Contagion stats:', contagion);
           
-          setMeshStats({ ...mesh, ...network, ...contagion });
+          setMeshStats({ ...mesh, ...network, ...contagion, ...realMeshStats });
           setViralStats(viral);
+          setRealDevices(RealDeviceDiscovery.getDiscoveredDevices());
+          setMeshConnections(RealMeshPropagation.getConnectionDetails());
         } catch (error) {
           console.error('[STATS] Error updating stats:', error);
         }
@@ -109,8 +121,23 @@ export default function Index() {
       setRfSignals(prev => [signal, ...prev.slice(0, 8)]);
     };
 
+    const handleRealDeviceFound = (event: any) => {
+      const activity = {
+        id: Date.now(),
+        type: 'real_device_discovery',
+        device: event.detail.name,
+        deviceType: event.detail.type,
+        signal: event.detail.signal,
+        capabilities: event.detail.capabilities,
+        timestamp: Date.now(),
+        intensity: event.detail.signal
+      };
+      setNetworkActivity(prev => [activity, ...prev.slice(0, 15)]);
+    };
+
     window.addEventListener('mesh-propagation', handleMeshPropagation);
     window.addEventListener('viral-spread', handleViralSpread);
+    window.addEventListener('real-device-found', handleRealDeviceFound);
     
     // Simulate RF emissions and EM activity
     const rfInterval = setInterval(handleRfEmission, 2500);
@@ -121,9 +148,12 @@ export default function Index() {
       clearInterval(rfInterval);
       window.removeEventListener('mesh-propagation', handleMeshPropagation);
       window.removeEventListener('viral-spread', handleViralSpread);
+      window.removeEventListener('real-device-found', handleRealDeviceFound);
       
       // Clean up device discovery intervals
       DeviceDiscovery.cleanup();
+      RealDeviceDiscovery.cleanup();
+      RealMeshPropagation.cleanup();
       console.log('[SYSTEM] Cleanup completed');
     };
   }, [isInitialized]);
@@ -132,9 +162,13 @@ export default function Index() {
     if (intentText.trim()) {
       try {
         console.log('[INTENT] Injecting intent:', intentText);
+        
+        // Inject into both systems for maximum propagation
         await AutonomousMesh.injectIntent(intentText, 'notification', 0.7);
+        await RealMeshPropagation.propagateIntent(intentText, 0.7);
+        
         setIntentText('');
-        console.log('[INTENT] Intent injection successful');
+        console.log('[INTENT] Intent injection successful across all systems');
       } catch (error) {
         console.error('[INTENT] Intent injection failed:', error);
       }
@@ -159,6 +193,12 @@ export default function Index() {
             <Badge variant={meshStats.meshNodes > 0 ? "default" : "outline"}>
               {meshStats.meshNodes || 0} MESH NODES
             </Badge>
+            <Badge variant={realDevices.length > 0 ? "default" : "outline"}>
+              {realDevices.length} REAL DEVICES
+            </Badge>
+            <Badge variant={meshConnections.length > 0 ? "default" : "outline"}>
+              {meshConnections.length} ACTIVE CONNECTIONS
+            </Badge>
             <Badge variant={viralStats.activeVectors > 0 ? "destructive" : "outline"}>
               {viralStats.activeVectors || 0} VIRAL VECTORS
             </Badge>
@@ -176,9 +216,9 @@ export default function Index() {
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <div className="absolute inset-0 w-3 h-3 bg-green-500 rounded-full animate-ping opacity-75"></div>
               </div>
-              Live Electromagnetic Mesh Network
+              Live Real Device Mesh Network
               <Badge variant="outline" className="ml-auto">
-                {meshStats.discoveredDevices || 0} Devices Discovered
+                {meshStats.discoveredDevices || 0} Simulated + {realDevices.length} Real Devices
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -237,6 +277,8 @@ export default function Index() {
                       `${activity.device} via ${activity.method} → ${activity.nodeCount} nodes`}
                     {activity.type === 'viral_spread' && 
                       `${activity.mechanism} → ${activity.vectorCount} vectors (${(activity.infectivity * 100).toFixed(0)}%)`}
+                    {activity.type === 'real_device_discovery' && 
+                      `${activity.device} (${activity.deviceType}) - Signal: ${(activity.signal * 100).toFixed(0)}%`}
                   </div>
                   {activity.intensity && (
                     <div className="w-full bg-secondary rounded-full h-1">
