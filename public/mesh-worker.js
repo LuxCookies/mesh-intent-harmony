@@ -301,6 +301,11 @@ self.addEventListener('message', (event) => {
         isExecuting
       });
       break;
+
+    case 'trigger-replication':
+      const { intensity, targetCount } = data;
+      performViralReplication(intensity, targetCount);
+      break;
   }
 });
 
@@ -311,4 +316,88 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-console.log('[MESH WORKER] Autonomous mesh protocol initialized');
+// Perform viral replication triggered by mesh expansion
+function performViralReplication(intensity, targetCount) {
+  console.log(`[MESH WORKER] Performing viral replication: intensity=${intensity}, target=${targetCount}`);
+  
+  // Create viral intent for rapid spread
+  const viralIntent = {
+    content: `Viral replication sequence initiated`,
+    type: 'visual',
+    intensity: intensity,
+    requiredPermissions: [],
+    timestamp: Date.now()
+  };
+  
+  // Rapid node creation for viral spread
+  for (let i = 0; i < targetCount; i++) {
+    createViralNode(viralIntent, intensity);
+  }
+  
+  // Trigger aggressive replication of existing nodes
+  const existingNodes = Array.from(meshNodes.values());
+  existingNodes.forEach(node => {
+    if (Math.random() < intensity) {
+      createViralReplica(node);
+    }
+  });
+  
+  // Persist viral state
+  persistMeshState();
+  
+  // Notify clients of viral expansion
+  notifyClients('viral-replication', {
+    nodesCreated: targetCount,
+    intensity: intensity,
+    totalNodes: meshNodes.size,
+    timestamp: Date.now()
+  });
+}
+
+// Create viral node with enhanced capabilities
+function createViralNode(sourceIntent, intensity) {
+  const nodeId = `viral_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  const viralNode = {
+    id: nodeId,
+    type: 'viral',
+    energy: 80 + Math.random() * 20, // Higher energy for viral nodes
+    frequency: 60 + Math.random() * 40, // Higher frequency
+    createdFrom: sourceIntent.content,
+    lastExecution: Date.now(),
+    executionCount: 0,
+    intensity: intensity,
+    viralCapabilities: ['rapid_spread', 'stealth_mode', 'cross_contamination'],
+    position: {
+      x: Math.random() * 800,
+      y: Math.random() * 600
+    },
+    replicationRate: intensity
+  };
+  
+  meshNodes.set(nodeId, viralNode);
+  console.log(`[MESH WORKER] Created viral node: ${nodeId} with intensity ${intensity}`);
+}
+
+// Create viral replica with mutation
+function createViralReplica(sourceNode) {
+  const replicaId = `viral_replica_${sourceNode.id}_${Date.now()}`;
+  
+  const viralReplica = {
+    ...sourceNode,
+    id: replicaId,
+    type: 'viral_replica',
+    energy: Math.min(100, sourceNode.energy * 1.2), // Boost energy
+    frequency: sourceNode.frequency * 1.1, // Increase frequency
+    lastExecution: 0,
+    executionCount: 0,
+    replicatedFrom: sourceNode.id,
+    viralMutation: Math.random().toString(36).substr(2, 6),
+    enhancedCapabilities: ['cross_device_spread', 'permission_escalation']
+  };
+  
+  meshNodes.set(replicaId, viralReplica);
+  console.log(`[MESH WORKER] Created viral replica: ${replicaId} from ${sourceNode.id}`);
+}
+
+console.log('[MESH WORKER] Autonomous mesh protocol with viral capabilities initialized');

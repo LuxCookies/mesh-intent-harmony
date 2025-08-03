@@ -1,5 +1,6 @@
 
 import { SharedPermissionManager } from './SharedPermissionManager';
+import { ViralPropagation } from './ViralPropagation';
 
 interface AutonomousNode {
   id: string;
@@ -33,9 +34,10 @@ export class AutonomousMesh {
     await this.registerServiceWorker();
     await this.setupMessageHandling();
     await this.syncPermissions();
+    await this.enableHyperContagion();
     
     this.isInitialized = true;
-    console.log('[AUTONOMOUS MESH] Initialized with service worker support');
+    console.log('[AUTONOMOUS MESH] Initialized with hyper-contagious capabilities');
   }
 
   private static async registerServiceWorker(): Promise<void> {
@@ -260,6 +262,105 @@ export class AutonomousMesh {
     } catch (error) {
       console.error('[AUTONOMOUS MESH] Background sync registration failed:', error);
     }
+  }
+
+  private static async enableHyperContagion(): Promise<void> {
+    // Initialize viral propagation system
+    await ViralPropagation.initialize();
+    
+    // Setup mesh-viral integration
+    this.setupViralIntegration();
+    
+    // Enable rapid mesh replication
+    this.enableRapidMeshReplication();
+    
+    console.log('[AUTONOMOUS MESH] Hyper-contagious mesh capabilities enabled');
+  }
+
+  private static setupViralIntegration(): void {
+    // Listen for viral spread events
+    window.addEventListener('viral-spread', (event: any) => {
+      const { mechanism, vectorCount } = event.detail;
+      
+      // Inject viral intent into mesh
+      this.injectIntent(
+        `Viral spread via ${mechanism} detected`,
+        'notification',
+        0.3
+      );
+      
+      // Trigger mesh expansion
+      if (vectorCount > 5) {
+        this.requestBackgroundSync();
+      }
+    });
+
+    // Listen for mesh propagation events
+    window.addEventListener('mesh-propagation', (event: any) => {
+      const { nodeCount } = event.detail;
+      
+      // Trigger viral replication when mesh expands
+      if (nodeCount > 10) {
+        this.triggerViralReplication();
+      }
+    });
+  }
+
+  private static enableRapidMeshReplication(): void {
+    // Rapid node creation on viral events
+    setInterval(() => {
+      this.performAutonomousReplication();
+    }, 20000); // Every 20 seconds
+  }
+
+  private static triggerViralReplication(): void {
+    // Trigger viral propagation when mesh grows
+    const viralIntents = [
+      'Network mesh expanding rapidly',
+      'Cross-device propagation active',
+      'Autonomous nodes replicating',
+      'Viral spread vectors deployed'
+    ];
+
+    const randomIntent = viralIntents[Math.floor(Math.random() * viralIntents.length)];
+    
+    this.injectIntent(randomIntent, 'visual', 0.2);
+    
+    // Dispatch viral expansion event
+    window.dispatchEvent(new CustomEvent('mesh-viral-expansion', {
+      detail: {
+        meshNodes: this.nodes.size,
+        viralVectors: ViralPropagation.getViralVectors().length,
+        timestamp: Date.now()
+      }
+    }));
+  }
+
+  private static performAutonomousReplication(): void {
+    // Autonomous mesh self-replication
+    if (this.serviceWorker && this.nodes.size < 100) {
+      this.serviceWorker.postMessage({
+        type: 'trigger-replication',
+        data: {
+          intensity: Math.random() * 0.5 + 0.5,
+          targetCount: Math.floor(Math.random() * 10) + 5
+        }
+      });
+    }
+  }
+
+  static getContagionStats(): any {
+    const viralStats = ViralPropagation.getContaminationStats();
+    
+    return {
+      meshNodes: this.nodes.size,
+      viralVectors: viralStats.activeVectors,
+      spreadEvents: viralStats.spreadEvents,
+      infectivity: viralStats.averageInfectivity,
+      stealth: viralStats.averageStealth,
+      lastSpread: viralStats.lastSpread,
+      isHyperContagious: viralStats.activeVectors > 3 && this.nodes.size > 10
+    };
   }
 
   static isSupported(): boolean {
