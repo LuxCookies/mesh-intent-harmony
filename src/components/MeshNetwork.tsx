@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MeshNode, NodeState } from './MeshNode';
+import { WebMeshDashboard } from './WebMeshDashboard';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import { WebMeshProtocol } from '../services/WebMeshProtocol';
+import { CrossDeviceMesh } from '../services/CrossDeviceMesh';
 import { BehavioralPsychologyEngine } from '@/services/BehavioralPsychologyEngine';
 import { DeviceIntegration } from '@/services/DeviceIntegration';
 import { CrossPlatformInfluence } from '@/services/CrossPlatformInfluence';
@@ -45,6 +48,10 @@ export const MeshNetwork: React.FC = () => {
       await CrossPlatformInfluence.initialize();
       await DeviceDiscovery.initialize();
       await HardwareAccess.initialize();
+      
+      // Initialize advanced web mesh protocols
+      await WebMeshProtocol.initialize();
+      await CrossDeviceMesh.initialize();
       
       // Initialize autonomous mesh
       if (AutonomousMesh.isSupported()) {
@@ -217,6 +224,12 @@ export const MeshNetwork: React.FC = () => {
         availableHardware.slice(0, 3), // Use up to 3 hardware components
         0.7 // High intensity
       );
+      
+      // Propagate via advanced web mesh
+      await WebMeshProtocol.propagateIntent(intentInput, 0.8);
+      
+      // Trigger cross-device propagation
+      await CrossDeviceMesh.propagateToAllDevices(intentInput, 0.8);
     }
 
     updatePermissionStatus();
@@ -282,6 +295,8 @@ export const MeshNetwork: React.FC = () => {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-6xl mx-auto space-y-4">
+        {/* Web Mesh Dashboard */}
+        <WebMeshDashboard />
         {/* Status Header */}
         <Card className="p-4">
           <div className="flex items-center justify-between">
