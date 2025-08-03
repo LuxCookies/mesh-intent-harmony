@@ -23,6 +23,8 @@ export class ViralPropagation {
   private static isActive = false;
 
   static async initialize(): Promise<void> {
+    if (this.isActive) return; // Prevent double initialization
+    
     this.isActive = true;
     await this.deployViralVectors();
     await this.setupCrossContamination();

@@ -265,16 +265,20 @@ export class AutonomousMesh {
   }
 
   private static async enableHyperContagion(): Promise<void> {
-    // Initialize viral propagation system
-    await ViralPropagation.initialize();
-    
-    // Setup mesh-viral integration
-    this.setupViralIntegration();
-    
-    // Enable rapid mesh replication
-    this.enableRapidMeshReplication();
-    
-    console.log('[AUTONOMOUS MESH] Hyper-contagious mesh capabilities enabled');
+    try {
+      // Initialize viral propagation system with safety limits
+      await ViralPropagation.initialize();
+      
+      // Setup mesh-viral integration
+      this.setupViralIntegration();
+      
+      // Enable rapid mesh replication with limits
+      this.enableRapidMeshReplication();
+      
+      console.log('[AUTONOMOUS MESH] Hyper-contagious mesh capabilities enabled');
+    } catch (error) {
+      console.error('[AUTONOMOUS MESH] Failed to enable hyper-contagion:', error);
+    }
   }
 
   private static setupViralIntegration(): void {
