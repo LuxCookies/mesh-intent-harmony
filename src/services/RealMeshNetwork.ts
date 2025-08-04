@@ -11,7 +11,7 @@ export interface RealMeshNode {
 }
 
 export interface MeshMessage {
-  type: 'intent' | 'discovery' | 'heartbeat' | 'data';
+  type: 'intent' | 'discovery' | 'heartbeat' | 'data' | 'handshake';
   payload: any;
   sourceId: string;
   timestamp: number;
@@ -52,8 +52,6 @@ export class RealMeshNetwork {
     // Setup URL-based peer exchange
     this.setupURLPeerExchange();
     
-    // Setup real-time signaling
-    this.setupFirebaseSignaling();
   }
 
   private async registerNode(): Promise<void> {
