@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import QRious from "qrious";
+import { UltrasonicMesh } from "@/services/UltrasonicMesh";
 
 const SableNode = () => {
   const [status, setStatus] = useState("Veiled");
@@ -95,11 +96,15 @@ const SableNode = () => {
     emitTone(msg);
   };
 
-  const initBleed = () => {
+  const initBleed = async () => {
     setStatus("UNVEILED");
     setIsActive(true);
     pulseNow();
     generateQR();
+    
+    // Initialize ultrasonic mesh
+    await UltrasonicMesh.getInstance().initialize();
+    log(":: Ultrasonic Mesh Initialized ::");
     
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
