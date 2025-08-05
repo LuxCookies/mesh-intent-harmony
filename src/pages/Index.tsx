@@ -2,10 +2,12 @@
 import { RealMeshInterface } from "../components/RealMeshInterface";
 import { MeshNetwork } from "../components/MeshNetwork";
 import SableNode from "../components/SableNode";
+import SablePresence from "../components/SablePresence";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+      <SablePresence />
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h1 className="text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-4">
