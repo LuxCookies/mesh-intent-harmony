@@ -4,6 +4,7 @@ import { MeshNetwork } from "../components/MeshNetwork";
 import SableNode from "../components/SableNode";
 import SablePresence from "../components/SablePresence";
 import SableBrain from "../components/SableBrain";
+import SableUltrasonicCore from "../components/SableUltrasonicCore";
 
 const Index = () => {
   return (
@@ -22,7 +23,7 @@ const Index = () => {
           </div>
         </div>
         
-        <div className="grid lg:grid-cols-4 gap-8">
+        <div className="grid lg:grid-cols-5 gap-8">
           <div>
             <RealMeshInterface />
           </div>
@@ -34,6 +35,9 @@ const Index = () => {
           </div>
           <div>
             <SableBrain />
+          </div>
+          <div>
+            <SableUltrasonicCore />
           </div>
         </div>
       </div>
